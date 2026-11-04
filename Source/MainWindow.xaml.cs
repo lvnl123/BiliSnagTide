@@ -53,6 +53,7 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         Loaded += (_, _) => SetupFluentMotion();
+        Loaded += async (_, _) => await CheckUpdatesOnLaunchAsync();
         _settings = Storage.Load();
         bool safeMode = Environment.GetCommandLineArgs().Contains("--safe-mode", StringComparer.OrdinalIgnoreCase);
         if (safeMode)
@@ -100,7 +101,7 @@ public partial class MainWindow : Window
             if (!safeMode && Environment.GetCommandLineArgs().Contains("--minimized") && _tray?.Visible == true) { Hide(); }
             if (!safeMode && _favorites.Count > 0) _ = MonitorFavoritesAsync(false);
         };
-        AppLog.Write("BiliSnagTide v4.5 启动");
+        AppLog.Write("BiliSnagTide v4.6.0 启动");
     }
     private async void BiliLogin_Click(object sender, RoutedEventArgs e)
     {
@@ -737,6 +738,8 @@ public partial class MainWindow : Window
         TrayToggle.IsChecked = _settings.MinimizeToTray; StartupToggle.IsChecked = _settings.StartWithWindows;
         AutoProbeToggle.IsChecked = _settings.AutoProbe; DarkToggle.IsChecked = _settings.DarkTheme; HlsPreferToggle.IsChecked = _settings.ProxyUseHls;
         ReduceMotionToggle.IsChecked = _settings.ReduceMotion;
+        UpdateAutoToggle.IsChecked = _settings.CheckUpdatesAutomatically;
+        UpdateCurrentVersionText.Text = "当前版本：v" + UpdateService.CurrentVersionText;
         SelectTag(QualityChoice, "all"); SelectTag(FormatChoice, _settings.Format); SelectTag(CodecChoice, _settings.Codec);
     }
     private static void SelectTag(System.Windows.Controls.ComboBox cb, string tag)
@@ -761,6 +764,7 @@ public partial class MainWindow : Window
         _settings.DarkTheme = DarkToggle.IsChecked == true;
         _settings.ReduceMotion = ReduceMotionToggle.IsChecked == true;
         _settings.StartWithWindows = StartupToggle.IsChecked == true;
+        _settings.CheckUpdatesAutomatically = UpdateAutoToggle.IsChecked == true;
         _monitorTimer.Interval = TimeSpan.FromSeconds(_settings.PollSeconds);
     }
     private void SaveSettings_Click(object sender, RoutedEventArgs e)

@@ -416,6 +416,42 @@
             <TextBlock Text="提示：关闭编辑器时选择取消可撤回预览；编辑器中保存后会写入当前用户配置。不会改变 Windows 系统配色。" Foreground="{DynamicResource SubText}" FontSize="12" TextWrapping="Wrap" Margin="0,10,0,0"/>
           </StackPanel>
         </GroupBox>
+        <GroupBox Header="软件更新 · GitHub Releases">
+          <StackPanel>
+            <TextBlock Text="自动检测 GitHub 最新正式版本；不会因普通源码提交或 README 更新而提示。更新永不自动安装。"
+                       TextWrapping="Wrap" Foreground="{DynamicResource SubText}" Margin="0,0,0,10"/>
+            <TextBlock x:Name="UpdateCurrentVersionText" Text="当前版本：v4.6.0"
+                       FontWeight="SemiBold" FontSize="15" Margin="0,0,0,5"/>
+            <TextBlock x:Name="UpdateLatestVersionText" Text="尚未检查 GitHub 版本"
+                       Foreground="{DynamicResource SubText}" Margin="0,0,0,10"/>
+            <CheckBox x:Name="UpdateAutoToggle" Content="启动后自动检查更新（最多每 24 小时一次）"
+                      IsChecked="True" Margin="0,0,0,12"/>
+            <WrapPanel Margin="0,0,0,9">
+              <Button x:Name="UpdateCheckButton" Content="检查更新" Click="UpdateCheck_Click" Margin="0,0,8,8"/>
+              <Button x:Name="UpdateDownloadButton" Content="软件内下载" Click="UpdateDownload_Click"
+                      Style="{StaticResource PrimaryButton}" IsEnabled="False" Margin="0,0,8,8"/>
+              <Button x:Name="UpdateGitHubButton" Content="前往 GitHub" Click="UpdateGitHub_Click" Margin="0,0,8,8"/>
+              <Button x:Name="UpdateApplyButton" Content="安装 / 应用更新" Click="UpdateApply_Click"
+                      IsEnabled="False" Margin="0,0,8,8"/>
+              <Button x:Name="UpdateCancelButton" Content="取消下载" Click="UpdateCancel_Click"
+                      IsEnabled="False" Margin="0,0,8,8"/>
+              <Button x:Name="UpdateSkipButton" Content="跳过此版本" Click="UpdateSkip_Click"
+                      IsEnabled="False" Margin="0,0,8,8"/>
+            </WrapPanel>
+            <ProgressBar x:Name="UpdateProgress" Height="9" Minimum="0" Maximum="100"
+                         Visibility="Collapsed" Margin="0,0,0,9"/>
+            <TextBlock x:Name="UpdateStatusText" Text="点击「检查更新」获取最新版本与更新日志。"
+                       Foreground="{DynamicResource SubText}" TextWrapping="Wrap" Margin="0,0,0,8"/>
+            <Border Background="{DynamicResource AccentSoft}" CornerRadius="10" Padding="12" Margin="0,0,0,8">
+              <ScrollViewer MaxHeight="180" VerticalScrollBarVisibility="Auto">
+                <TextBlock x:Name="UpdateNotesText" Text="尚无更新说明。"
+                           Foreground="{DynamicResource MainText}" TextWrapping="Wrap" FontSize="12"/>
+              </ScrollViewer>
+            </Border>
+            <TextBlock Text="下载后将检查 SHA-256；只有你确认时才会执行。绿色版退出后替换 EXE；安装版启动新版安装器。未签名程序可能触发 Windows 安全提示。"
+                       TextWrapping="Wrap" Foreground="{DynamicResource SubText}" FontSize="12"/>
+          </StackPanel>
+        </GroupBox>
         <Button Content="保存全部设置" Style="{StaticResource PrimaryButton}" Width="160" HorizontalAlignment="Left" Click="SaveSettings_Click"/>
       </StackPanel></ScrollViewer></TabItem>
       <!-- Diagnostics -->

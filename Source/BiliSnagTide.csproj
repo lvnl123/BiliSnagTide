@@ -10,6 +10,9 @@
     <RootNamespace>BiliLiveManager</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>App.ico</ApplicationIcon>
+    <Version>4.6.0</Version>
+    <AssemblyVersion>4.6.0.0</AssemblyVersion>
+    <FileVersion>4.6.0.0</FileVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(PortableBuild)' == 'true'">
     <DefineConstants>$(DefineConstants);PORTABLE_BUILD</DefineConstants>

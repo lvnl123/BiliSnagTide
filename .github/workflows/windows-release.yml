@@ -11,7 +11,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: windows-release-v4.5.4
+  group: windows-release-v4.6.0
   cancel-in-progress: false
 
 jobs:
@@ -43,7 +43,7 @@ jobs:
           $sidecars = @(Get-ChildItem "out/portable-publish" -File | Where-Object { $_.Extension -in @(".dll",".json") })
           if ($sidecars.Count -gt 0) { throw "Portable publish has runtime sidecars: $($sidecars.Name -join ', ')" }
           New-Item -ItemType Directory -Force -Path "out/assets" | Out-Null
-          Copy-Item $src "out/assets/BiliSnagTide-v4.5.4-Windows-x64-Portable.exe"
+          Copy-Item $src "out/assets/BiliSnagTide-v4.6.0-Windows-x64-Portable.exe"
 
       - name: Clean between build variants
         shell: pwsh
@@ -73,7 +73,7 @@ jobs:
         run: |
           & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "packaging\BiliSnagTide.iss"
           if ($LASTEXITCODE -ne 0) { throw "Installer compilation failed" }
-          $installer = "out/installer/BiliSnagTide-v4.5.4-Windows-x64-Setup.exe"
+          $installer = "out/installer/BiliSnagTide-v4.6.0-Windows-x64-Setup.exe"
           if (!(Test-Path $installer)) { throw "Installer EXE missing" }
           Copy-Item $installer "out/assets/"
 
@@ -81,8 +81,8 @@ jobs:
         shell: pwsh
         run: |
           $items = @(
-            "out/assets/BiliSnagTide-v4.5.4-Windows-x64-Portable.exe",
-            "out/assets/BiliSnagTide-v4.5.4-Windows-x64-Setup.exe"
+            "out/assets/BiliSnagTide-v4.6.0-Windows-x64-Portable.exe",
+            "out/assets/BiliSnagTide-v4.6.0-Windows-x64-Setup.exe"
           )
           foreach ($f in $items) {
             if (!(Test-Path $f)) { throw "Missing asset: $f" }
@@ -90,20 +90,36 @@ jobs:
             Get-FileHash $f -Algorithm SHA256 | Format-List
           }
 
+      - name: Write SHA-256 checksum manifest
+        shell: pwsh
+        run: |
+          $files = @(
+            "out/assets/BiliSnagTide-v4.6.0-Windows-x64-Portable.exe",
+            "out/assets/BiliSnagTide-v4.6.0-Windows-x64-Setup.exe"
+          )
+          $lines = foreach ($file in $files) {
+            $hash = (Get-FileHash $file -Algorithm SHA256).Hash.ToLowerInvariant()
+            $name = [System.IO.Path]::GetFileName($file)
+            "$hash  $name"
+          }
+          [System.IO.File]::WriteAllLines("out/assets/SHA256SUMS.txt", [string[]]$lines, [System.Text.Encoding]::ASCII)
+          if ((Get-Content "out/assets/SHA256SUMS.txt").Count -ne 2) { throw "Checksum manifest incomplete" }
+
       - name: Publish GitHub Release with EXEs
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $tag = "v4.5.4"
+          $tag = "v4.6.0"
           $assets = @(
-            "out/assets/BiliSnagTide-v4.5.4-Windows-x64-Portable.exe",
-            "out/assets/BiliSnagTide-v4.5.4-Windows-x64-Setup.exe"
+            "out/assets/BiliSnagTide-v4.6.0-Windows-x64-Portable.exe",
+            "out/assets/BiliSnagTide-v4.6.0-Windows-x64-Setup.exe",
+            "out/assets/SHA256SUMS.txt"
           )
           gh release view $tag --repo $env:GITHUB_REPOSITORY *> $null
           if ($LASTEXITCODE -eq 0) {
             gh release upload $tag $assets --clobber --repo $env:GITHUB_REPOSITORY
           } else {
-            gh release create $tag $assets --title "BiliSnagTide v4.5.4" --notes-file "packaging/RELEASE_NOTES.md" --target $env:GITHUB_SHA --repo $env:GITHUB_REPOSITORY --latest
+            gh release create $tag $assets --title "BiliSnagTide v4.6.0" --notes-file "packaging/RELEASE_NOTES.md" --target $env:GITHUB_SHA --repo $env:GITHUB_REPOSITORY --latest
           }
           if ($LASTEXITCODE -ne 0) { throw "Release publish failed" }

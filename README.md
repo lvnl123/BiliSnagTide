@@ -61,6 +61,7 @@
 | 🕘 **检索与历史** | 搜索直播间、保存播放历史、批量管理房间与导出 M3U |
 | 🛠️ **诊断与工具** | 线路连接诊断、画质信息、运行日志、设置和本地代理管理 |
 | 🎨 **个性化外观** | 六套主题预设、独立浅色/深色配色、颜色角色自定义、主题 JSON 导入导出、减少动画 |
+| 🔄 **软件更新** | 自动与手动检查 GitHub 正式 Releases、更新日志、软件内下载进度、SHA-256 校验、前往 GitHub 下载 |
 
 **额外说明：** 帧率、分辨率等媒体属性检测可能需要你自行配置 `ffprobe`；PotPlayer 属于外部播放器，程序不附带它们。
 
@@ -75,14 +76,14 @@
 | **绿色便携版（Portable）** | 想直接运行、随身携带、不安装程序 | 下载 `*Portable.exe` 后双击运行；旧版 ZIP 需要先解压 | 绿色单文件版：EXE 同目录的 `Data/` |
 | **标准安装版（Setup）** | 希望有开始菜单入口和卸载流程 | 运行 `*Setup.exe`，按安装向导操作 | `%LOCALAPPDATA%\BiliSnagTide` |
 
-两种构建均使用 **.NET 8 自包含发布**，普通用户**不需要安装 .NET SDK**；支持 Windows x64。PotPlayer、ffprobe 等外部工具如需使用，仍需自行安装。
+两种构建均使用 **.NET 8 自包含发布**，普通用户**不需要安装 .NET SDK**；支持 Windows x64。v4.6.0 起可在设置页检查 GitHub 正式版本并在软件内下载验证。PotPlayer、ffprobe 等外部工具如需使用，仍需自行安装。
 
 <details>
 <summary><strong>绿色便携版存放在哪里更合适？</strong></summary>
 
 建议单独放在有写入权限的文件夹，例如 `D:\Apps\BiliSnagTide\`。程序会在 EXE 旁创建 `Data/` 保存设置、收藏与日志；不要把它直接放进需要管理员权限写入的系统目录。
 
-v4.5.4 单文件编译配置不需要 `portable.flag`。若使用旧版 v4.5.3 的绿色 ZIP，请保留包内原有文件结构和 `portable.flag`。
+v4.6.0 单文件编译配置不需要 `portable.flag`。若使用旧版 v4.5.3 的绿色 ZIP，请保留包内原有文件结构和 `portable.flag`。
 </details>
 
 <details>

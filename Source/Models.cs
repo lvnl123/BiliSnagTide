@@ -89,6 +89,9 @@ public sealed class SettingsModel
     public bool ClipboardDetect { get; set; } = true;
     public bool NotifyLive { get; set; } = true;
     public bool StartWithWindows { get; set; }
+    public bool CheckUpdatesAutomatically { get; set; } = true;
+    public DateTimeOffset LastUpdateCheckUtc { get; set; } = DateTimeOffset.MinValue;
+    public string SkippedUpdateTag { get; set; } = "";
     public bool MinimizeToTray { get; set; } = true;
     public int PollSeconds { get; set; } = 120;
     public int ProxyPort { get; set; } = 18888;
