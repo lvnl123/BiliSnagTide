@@ -101,10 +101,13 @@ public sealed class SettingsModel
 }
 public static class Storage
 {
-    // The portable ZIP contains a marker next to BiliSnagTide.exe. It saves all
-    // user settings, favorites and diagnostics under the extracted Data folder.
-    // Installed builds have no marker and use the normal user profile location.
+    // Dedicated PortableBuild makes the single EXE portable without sidecar files.
+    // For compatibility the old v4.5.3 ZIP still accepts portable.flag.
+#if PORTABLE_BUILD
+    public static readonly bool IsPortable = true;
+#else
     public static readonly bool IsPortable = File.Exists(Path.Combine(AppContext.BaseDirectory, "portable.flag"));
+#endif
     public static readonly string DataDir = IsPortable
         ? Path.Combine(AppContext.BaseDirectory, "Data")
         : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "BiliSnagTide");

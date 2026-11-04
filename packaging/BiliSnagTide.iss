@@ -1,5 +1,5 @@
 #define MyAppName "BiliSnagTide"
-#define MyAppVersion "4.5.3"
+#define MyAppVersion "4.5.4"
 #define MyAppExeName "BiliSnagTide.exe"
 
 [Setup]
@@ -21,11 +21,11 @@ Compression=lzma2
 SolidCompression=yes
 SetupIconFile=..\Source\App.ico
 OutputDir=..\out\installer
-OutputBaseFilename=BiliSnagTide-v4.5.3-Windows-x64-Setup
+OutputBaseFilename=BiliSnagTide-v4.5.4-Windows-x64-Setup
 CloseApplications=yes
 RestartApplications=no
 DisableProgramGroupPage=yes
-VersionInfoVersion=4.5.3.0
+VersionInfoVersion=4.5.4.0
 VersionInfoDescription=BiliSnagTide Windows Installer
 SetupLogging=yes
 
