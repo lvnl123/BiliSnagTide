@@ -1,23 +1,21 @@
-# BiliSnagTide v4.6.0 — GitHub 更新中心
+# BiliSnagTide v4.6.1 — 恢复 ZIP 绿色便携版
 
-这是 BiliSnagTide 的 Windows x64 自包含版本（.NET 8 / WPF）。第三方非官方 B 站直播辅助工具。
+本次是发行形式调整，保留 v4.6.0 新增的软件内更新中心、直播源解析、弹幕伴侣与主题工作台。
 
-## 新增：软件内检查与下载更新
+## Windows x64 下载
 
-- 启动后自动检查 GitHub **正式 Releases**（可关闭，最多每 24 小时检查一次）。
-- 设置与代理新增「软件更新」区：手动检查、版本信息、更新日志、跳过版本及 GitHub 下载入口。
-- 支持软件内下载、实时进度、取消、SHA-256 校验。**任何更新均需手动确认，绝不静默安装。**
-- **绿色版**：下载验证后，可在退出时由新 EXE 替换原 EXE 并重新运行；设置、收藏和日志仍存放在程序同目录的 `Data/`。
-- **安装版**：下载验证后启动新版安装器；设置数据继续保存在 `%LOCALAPPDATA%\BiliSnagTide`。
-- 新增 `SHA256SUMS.txt` 供客户端验证 Release 附件，缺少校验信息时禁用软件内安装。
-- GitHub 仓库源码提交和 README 修改不触发更新通知，只有发布新正式版本才会提示。
+- **BiliSnagTide-v4.6.1-Windows-x64-Portable.zip** — 免安装绿色版，解压完整 ZIP 后双击 `BiliSnagTide.exe`。请勿只提取 EXE，文件夹中的 DLL、运行时组件和 `portable.flag` 应当保留。设置、收藏及日志在解压目录的 `Data/` 中。
+- **BiliSnagTide-v4.6.1-Windows-x64-Setup.exe** — 正常安装版，带快捷方式与卸载功能；用户数据保存在 `%LOCALAPPDATA%\BiliSnagTide`。
+- **SHA256SUMS.txt** — 两份分发包的 SHA-256 文件校验值。
 
-## 下载
+两个版本均包含 .NET 8 运行时，普通用户无需安装 .NET SDK，亦不会使用旧版 `BiliLiveBuildCache`。
 
-- `BiliSnagTide-v4.6.0-Windows-x64-Portable.exe`：绿色单文件版，直接运行，不需要安装或外部标记文件。
-- `BiliSnagTide-v4.6.0-Windows-x64-Setup.exe`：标准安装包版，含开始菜单和卸载功能。
-- `SHA256SUMS.txt`：这两个 EXE 的 SHA-256 校验清单。
+## 软件内更新适配
 
-两个版本都自带 .NET 运行时，不需要 .NET SDK，也**不会使用旧版 `BiliLiveBuildCache`**。PotPlayer / ffprobe 等其他可选工具由用户自行安装。
+- 检查 GitHub 正式 Release、显示更新说明、下载进度、取消与 SHA-256 校验均保留。
+- 绿色版的新更新附件改为 **Portable.zip**。验证 ZIP 后，软件会解压至**原程序旁的独立新版本文件夹**，迁移原文件夹 `Data/` 下的设置与收藏，再启动新版。旧版文件夹不自动删除，可用于回退。
+- 这不会在软件仍运行时覆盖原程序 DLL。安装版仍下载并启动新的 Setup.exe。
+- **从 v4.6.0 单 EXE 便携版升级：** 因该旧版本只识别 `Portable.exe` 附件，首次需要从 GitHub 下载 v4.6.1 ZIP 并手动解压。之前单文件旁的 `Data/` 可复制到解压后的程序文件夹。
+- 正式版本更新需用户确认，绝不强制执行。
 
-> 请注意：程序和安装包尚未进行 Authenticode 代码签名，Windows 可能显示未知发布者。仅从本仓库的 Releases 获取文件，并在应用更新前保存重要工作。
+> 发行包未经代码签名，Windows 可能提示未知发布者。请仅通过本仓库 Releases 下载，保留重要设置备份。

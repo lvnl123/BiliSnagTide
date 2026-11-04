@@ -15,11 +15,11 @@ namespace BiliLiveManager;
 
 /// <summary>
 /// Uses only the official GitHub Releases API. No personal access token is required.
-/// A downloaded executable is never offered for execution until its SHA-256 passes.
+/// A downloaded package is not offered for use until its SHA-256 passes.
 /// </summary>
 public static class UpdateService
 {
-    public const string CurrentVersionText = "4.6.0";
+    public const string CurrentVersionText = "4.6.1";
     public static readonly Version CurrentVersion = new(4, 6, 0);
     public const string OfficialReleasesUrl = "https://github.com/lvnl123/BiliSnagTide/releases";
     private const string ApiUrl = "https://api.github.com/repos/lvnl123/BiliSnagTide/releases/latest";
@@ -32,7 +32,7 @@ public static class UpdateService
             AllowAutoRedirect = true,
             AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
         }) { Timeout = Timeout.InfiniteTimeSpan };
-        client.DefaultRequestHeaders.UserAgent.ParseAdd("BiliSnagTide/4.6.0 (Windows; update-check)");
+        client.DefaultRequestHeaders.UserAgent.ParseAdd("BiliSnagTide/4.6.1 (Windows; update-check)");
         client.DefaultRequestHeaders.Accept.ParseAdd("application/vnd.github+json");
         return client;
     }
@@ -66,7 +66,7 @@ public static class UpdateService
         var page = Text(root, "html_url");
         if (!IsReleasePage(page, tag)) throw new InvalidDataException("Release 页面不是指定的 GitHub 仓库。");
 
-        string suffix = portable ? "-Portable.exe" : "-Setup.exe";
+        string suffix = portable ? "-Portable.zip" : "-Setup.exe";
         string expectedAsset = $"BiliSnagTide-{tag}-Windows-x64{suffix}";
         string name = "", url = "", digest = "";
         string? manifest = null;
@@ -157,7 +157,7 @@ public static class UpdateService
             throw new InvalidDataException("无法确定安全的更新附件。");
 
         string expectedHash = await ExpectedDigestAsync(release, cancellationToken);
-        // Download into a separate staging area; the active executable is never written here.
+        // Download into the local Data/Updates cache; never write over the active application.
         string directory = Path.Combine(Storage.DataDir, "Updates");
         Directory.CreateDirectory(directory);
         string output = Path.Combine(directory, release.AssetName);
@@ -200,52 +200,96 @@ public static class UpdateService
         }
     }
 
-    // The newly downloaded portable EXE runs as a helper after the old process exits.
-    // No shell script, SDK installer, or BiliLiveBuildCache directory is used.
-    public static void ApplyPortableReplacement(string targetPath, string waitingPid)
+    /// <summary>
+    /// A verified portable ZIP is unpacked beside the existing installation, NOT on
+    /// top of running EXE/DLL files. Copy settings to new Data directory and retain
+    /// the old folder for rollback. The caller decides when to launch the new app.
+    /// </summary>
+    public static async Task<string> PreparePortableZipUpgradeAsync(
+        ReleaseInfo release, string verifiedZip, string currentExe, CancellationToken ct)
     {
-        if (!int.TryParse(waitingPid, out int pid) || pid <= 0)
-            throw new ArgumentException("无效的更新进程编号。");
-        targetPath = Path.GetFullPath(targetPath);
-        var name = Path.GetFileName(targetPath);
-        if (!name.StartsWith("BiliSnagTide", StringComparison.OrdinalIgnoreCase)
-            || !name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)
-            || !File.Exists(targetPath))
-            throw new InvalidOperationException("更新目标不是已有的 BiliSnagTide 可执行文件。");
+        if (!Storage.IsPortable)
+            throw new InvalidOperationException("仅绿色便携版支持 ZIP 解压升级。");
+        if (!release.IsNewer || !release.AssetName.EndsWith("-Portable.zip", StringComparison.Ordinal)
+            || !string.Equals(Path.GetFileName(verifiedZip), release.AssetName, StringComparison.Ordinal)
+            || !File.Exists(verifiedZip))
+            throw new InvalidDataException("绿色版更新包无效。");
 
-        for (int i = 0; i < 100; i++)
+        // Verify once again at the moment of applying, not only at download time.
+        var expected = await ExpectedDigestAsync(release, ct);
+        await using (var input = File.OpenRead(verifiedZip))
         {
-            try
+            var actual = Convert.ToHexString(await SHA256.HashDataAsync(input, ct)).ToLowerInvariant();
+            if (!string.Equals(expected, actual, StringComparison.Ordinal))
+                throw new InvalidDataException("更新文件 SHA-256 校验失败，无法解压。");
+        }
+        ct.ThrowIfCancellationRequested();
+
+        string currentDir = Path.GetDirectoryName(Path.GetFullPath(currentExe))
+            ?? throw new InvalidOperationException("找不到当前程序文件夹。");
+        string parent = Directory.GetParent(currentDir)?.FullName
+            ?? throw new InvalidOperationException("无法确定更新目标文件夹。");
+        string targetDir = Path.Combine(parent, "BiliSnagTide-" + release.Tag);
+        if (Directory.Exists(targetDir))
+            throw new IOException("目标版本文件夹已存在，请先备份或重命名该文件夹：" + targetDir);
+
+        bool created = false;
+        try
+        {
+            // ZIP-slip and zip-bomb checks BEFORE extraction. The package is
+            // expected to contain normal runtime files at the archive root.
+            using (var archive = System.IO.Compression.ZipFile.OpenRead(verifiedZip))
             {
-                using var process = Process.GetProcessById(pid);
-                if (process.HasExited) break;
+                if (archive.Entries.Count > 4000)
+                    throw new InvalidDataException("ZIP 内文件数量异常。");
+                long totalUncompressed = 0;
+                string fullRoot = Path.GetFullPath(targetDir) + Path.DirectorySeparatorChar;
+                foreach (var entry in archive.Entries)
+                {
+                    ct.ThrowIfCancellationRequested();
+                    var relative = entry.FullName.Replace('/', Path.DirectorySeparatorChar);
+                    var full = Path.GetFullPath(Path.Combine(targetDir, relative));
+                    if (!full.StartsWith(fullRoot, StringComparison.OrdinalIgnoreCase)
+                        || relative.StartsWith("Data" + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)
+                        || relative.Equals("Data", StringComparison.OrdinalIgnoreCase)
+                        || entry.FullName.Contains(':'))
+                        throw new InvalidDataException("ZIP 包含无效的文件路径。");
+                    if (entry.Length > 500_000_000)
+                        throw new InvalidDataException("ZIP 文件体积异常。");
+                    totalUncompressed = checked(totalUncompressed + entry.Length);
+                    if (totalUncompressed > 1_500_000_000)
+                        throw new InvalidDataException("ZIP 解压后体积超过限制。");
+                }
             }
-            catch (ArgumentException) { break; }
-            Thread.Sleep(300);
-        }
-        try
-        {
-            using var stillRunning = Process.GetProcessById(pid);
-            if (!stillRunning.HasExited)
-                throw new IOException("旧程序仍在运行，请先完全退出后重试。");
-        }
-        catch (ArgumentException) { /* Process has exited. */ }
 
-        string? helper = Environment.ProcessPath;
-        if (string.IsNullOrEmpty(helper) || !File.Exists(helper))
-            throw new FileNotFoundException("更新程序不存在。");
+            Directory.CreateDirectory(targetDir);
+            created = true;
+            System.IO.Compression.ZipFile.ExtractToDirectory(verifiedZip, targetDir, overwriteFiles: false);
+            string nextExe = Path.Combine(targetDir, "BiliSnagTide.exe");
+            if (!File.Exists(nextExe) || !File.Exists(Path.Combine(targetDir, "portable.flag")))
+                throw new InvalidDataException("ZIP 中缺少程序或便携模式标记。");
 
-        string stage = Path.Combine(Path.GetDirectoryName(targetPath)!, ".BiliSnagTide-update-" + Guid.NewGuid().ToString("N") + ".exe");
-        try
-        {
-            File.Copy(helper, stage, overwrite: false);
-            File.Move(stage, targetPath, overwrite: true);
-            Process.Start(new ProcessStartInfo(targetPath)
+            // Favorites, history, theme and proxy settings all live in settings.json.
+            // Do not copy the downloaded ZIP or the Updates cache into the new build.
+            string nextData = Path.Combine(targetDir, "Data");
+            Directory.CreateDirectory(nextData);
+            foreach (var name in new[] { "settings.json", "diagnostics.log", "diagnostics.log.old" })
             {
-                UseShellExecute = true,
-                WorkingDirectory = Path.GetDirectoryName(targetPath)!
-            });
+                ct.ThrowIfCancellationRequested();
+                string source = Path.Combine(Storage.DataDir, name);
+                if (File.Exists(source) && (File.GetAttributes(source) & FileAttributes.ReparsePoint) == 0)
+                    File.Copy(source, Path.Combine(nextData, name), overwrite: false);
+            }
+            return nextExe;
         }
-        finally { try { if (File.Exists(stage)) File.Delete(stage); } catch { } }
+        catch
+        {
+            // A partial extraction must never be presented as a valid new version.
+            if (created)
+            {
+                try { Directory.Delete(targetDir, recursive: true); } catch { }
+            }
+            throw;
+        }
     }
 }

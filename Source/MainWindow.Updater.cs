@@ -114,7 +114,7 @@ public partial class MainWindow
             UpdateProgress.IsIndeterminate = false;
             UpdateProgress.Value = 100;
             UpdateApplyButton.IsEnabled = true;
-            UpdateStatusText.Text = "下载完成，SHA-256 校验通过。点击「安装 / 应用更新」后才会执行。";
+            UpdateStatusText.Text = "下载完成，SHA-256 校验通过。点击「安装 / 应用更新」才会继续；绿色 ZIP 将解压到新文件夹。";
         }
         catch (OperationCanceledException)
         {
@@ -153,29 +153,42 @@ public partial class MainWindow
         catch (Exception ex) { UpdateStatusText.Text = "无法打开浏览器：" + ex.Message; }
     }
 
-    private void UpdateApply_Click(object sender, RoutedEventArgs e)
+    private async void UpdateApply_Click(object sender, RoutedEventArgs e)
     {
         string? updateFile = _verifiedDownloadPath;
-        if (updateFile is null || !File.Exists(updateFile) || _latestRelease is not { IsNewer: true }) return;
-        string mode = Storage.IsPortable ? "绿色便携版：程序退出后替换旧 EXE 并重新启动。" :
-            "安装版：程序退出后运行已下载的新版安装包。";
+        if (updateFile is null || !File.Exists(updateFile) || _latestRelease is not { IsNewer: true } release)
+            return;
+
+        string mode = Storage.IsPortable
+            ? "绿色便携版：解压 ZIP 到原程序旁的新版本文件夹，复制原有设置、收藏和日志。旧版本不会删除，可随时回退。"
+            : "安装版：退出程序后运行已下载的新版安装包。";
         var answer = System.Windows.MessageBox.Show(this,
-            $"更新包已通过 SHA-256 校验。\n\n{mode}\n\n即将退出 BiliSnagTide，是否继续？",
-            "确认安装更新", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            $"更新包已通过 SHA-256 校验。\n\n{mode}\n\n是否继续？",
+            "确认应用更新", MessageBoxButton.YesNo, MessageBoxImage.Question);
         if (answer != MessageBoxResult.Yes) return;
 
+        UpdateApplyButton.IsEnabled = false;
+        UpdateDownloadButton.IsEnabled = false;
+        UpdateCheckButton.IsEnabled = false;
         try
         {
             if (Storage.IsPortable)
             {
-                string target = Environment.ProcessPath ??
+                UpdateStatusText.Text = "正在核对 ZIP 并解压新版本，保留原目录…";
+                string currentExe = Environment.ProcessPath ??
                     throw new InvalidOperationException("无法获取当前程序路径。");
-                // The newly downloaded portable EXE handles replacement after this process exits.
-                var start = new ProcessStartInfo(updateFile) { UseShellExecute = true };
-                start.ArgumentList.Add("--apply-update");
-                start.ArgumentList.Add(target);
-                start.ArgumentList.Add(Environment.ProcessId.ToString());
-                Process.Start(start);
+                // Flush the most recent UI settings before migrating the portable Data folder.
+                CaptureSettings();
+                SaveData();
+                string newExe = await UpdateService.PreparePortableZipUpgradeAsync(
+                    release, updateFile, currentExe, CancellationToken.None);
+                // No running executables or DLLs are overwritten: launch the
+                // extracted version only after the user has explicitly agreed.
+                Process.Start(new ProcessStartInfo(newExe)
+                {
+                    UseShellExecute = true,
+                    WorkingDirectory = Path.GetDirectoryName(newExe)!
+                });
             }
             else
             {
@@ -186,9 +199,12 @@ public partial class MainWindow
         }
         catch (Exception ex)
         {
-            UpdateStatusText.Text = "启动更新失败：" + ex.Message +
-                "。已下载的文件仍保留，可选择前往 GitHub 更新。";
-            AppLog.Write("启动更新程序失败", ex);
+            UpdateStatusText.Text = "应用更新未完成：" + ex.Message +
+                "。原版本仍可使用，也可前往 GitHub 手动更新。";
+            AppLog.Write("应用软件更新失败", ex);
+            UpdateApplyButton.IsEnabled = File.Exists(updateFile);
+            UpdateDownloadButton.IsEnabled = true;
+            UpdateCheckButton.IsEnabled = true;
         }
     }
 }

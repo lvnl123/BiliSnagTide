@@ -420,7 +420,7 @@
           <StackPanel>
             <TextBlock Text="自动检测 GitHub 最新正式版本；不会因普通源码提交或 README 更新而提示。更新永不自动安装。"
                        TextWrapping="Wrap" Foreground="{DynamicResource SubText}" Margin="0,0,0,10"/>
-            <TextBlock x:Name="UpdateCurrentVersionText" Text="当前版本：v4.6.0"
+            <TextBlock x:Name="UpdateCurrentVersionText" Text="当前版本：v4.6.1"
                        FontWeight="SemiBold" FontSize="15" Margin="0,0,0,5"/>
             <TextBlock x:Name="UpdateLatestVersionText" Text="尚未检查 GitHub 版本"
                        Foreground="{DynamicResource SubText}" Margin="0,0,0,10"/>

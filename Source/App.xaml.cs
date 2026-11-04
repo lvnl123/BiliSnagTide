@@ -10,27 +10,6 @@ public partial class App : System.Windows.Application
 {
     protected override void OnStartup(StartupEventArgs e)
     {
-        // A new verified portable EXE may be launched as a replacement helper.
-        // Do not create the main window, proxy, tray or any background monitors.
-        if (e.Args.Length == 3 &&
-            string.Equals(e.Args[0], "--apply-update", StringComparison.OrdinalIgnoreCase))
-        {
-            base.OnStartup(e);
-            try { UpdateService.ApplyPortableReplacement(e.Args[1], e.Args[2]); }
-            catch (Exception ex)
-            {
-                try
-                {
-                    System.Windows.MessageBox.Show("绿色版更新未完成：" + ex.Message +
-                        "\n原程序没有主动删除，请检查目标目录写入权限。",
-                        "BiliSnagTide 更新", MessageBoxButton.OK, MessageBoxImage.Warning);
-                }
-                catch { }
-            }
-            Shutdown();
-            return;
-        }
-
         // Set up logging before constructing MainWindow. WPF StartupUri can otherwise
         // terminate the process silently when InitializeComponent or tray init fails.
         AppDomain.CurrentDomain.UnhandledException += (_, args) =>

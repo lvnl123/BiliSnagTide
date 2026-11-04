@@ -69,21 +69,21 @@
 
 **官方发布入口：** **[GitHub Releases — 查看可下载版本](https://github.com/lvnl123/BiliSnagTide/releases)**
 
-发布构建支持下面两种 Windows x64 交付方式。**请以 Releases 页面上实际显示的附件为准**；历史版本的绿色版可能是 ZIP，较新的构建配置支持单文件 EXE。
+发布构建支持下面两种 Windows x64 交付方式。**请以 Releases 页面上实际显示的附件为准**；自 v4.6.1 起恢复 ZIP 绿色便携版，解压后保留完整运行目录及 `portable.flag`。历史 v4.6.0 单文件 EXE 仍可从旧版 Release 下载。
 
 | 版本 | 适合谁 | 运行方式 | 用户数据 |
 |:--|:--|:--|:--|
-| **绿色便携版（Portable）** | 想直接运行、随身携带、不安装程序 | 下载 `*Portable.exe` 后双击运行；旧版 ZIP 需要先解压 | 绿色单文件版：EXE 同目录的 `Data/` |
+| **绿色便携版（Portable）** | 想直接运行、随身携带、不安装程序 | 下载 `*Portable.zip`，完整解压后运行文件夹内的 `BiliSnagTide.exe` | 绿色 ZIP 版：解压目录内的 `Data/` |
 | **标准安装版（Setup）** | 希望有开始菜单入口和卸载流程 | 运行 `*Setup.exe`，按安装向导操作 | `%LOCALAPPDATA%\BiliSnagTide` |
 
-两种构建均使用 **.NET 8 自包含发布**，普通用户**不需要安装 .NET SDK**；支持 Windows x64。v4.6.0 起可在设置页检查 GitHub 正式版本并在软件内下载验证。PotPlayer、ffprobe 等外部工具如需使用，仍需自行安装。
+两种构建均使用 **.NET 8 自包含发布**，普通用户**不需要安装 .NET SDK**；支持 Windows x64。v4.6.0 起可在设置页检查 GitHub 正式版本并在软件内下载验证；v4.6.1 起绿色版支持 ZIP 解压更新。PotPlayer、ffprobe 等外部工具如需使用，仍需自行安装。
 
 <details>
 <summary><strong>绿色便携版存放在哪里更合适？</strong></summary>
 
 建议单独放在有写入权限的文件夹，例如 `D:\Apps\BiliSnagTide\`。程序会在 EXE 旁创建 `Data/` 保存设置、收藏与日志；不要把它直接放进需要管理员权限写入的系统目录。
 
-v4.6.0 单文件编译配置不需要 `portable.flag`。若使用旧版 v4.5.3 的绿色 ZIP，请保留包内原有文件结构和 `portable.flag`。
+v4.6.1 ZIP 便携版需要保留 `portable.flag`。若使用旧版 v4.5.3 的绿色 ZIP，请保留包内原有文件结构和 `portable.flag`。
 </details>
 
 <details>
@@ -134,17 +134,17 @@ dotnet restore .\Source\BiliSnagTide.csproj
 dotnet build .\Source\BiliSnagTide.csproj -c Release
 ```
 
-### 发布绿色单文件 EXE（Windows x64）
+### 发布绿色便携程序目录（Windows x64）
 
 ```powershell
 dotnet publish .\Source\BiliSnagTide.csproj `
   -c Release -r win-x64 --self-contained true `
-  -p:PortableBuild=true -p:PublishSingleFile=true `
+  -p:PortableBuild=false -p:PublishSingleFile=false `
   -p:IncludeNativeLibrariesForSelfExtract=true `
   -o .\out\portable
 ```
 
-`PortableBuild=true` 在**编译时**启用便携数据目录模式，编译得到的 `BiliSnagTide.exe` 可直接运行。标准安装版则使用 `PortableBuild=false`，再由 Inno Setup 打包。
+把发布输出文件夹中的全部文件保留并压缩成 ZIP，同时在文件夹根目录增加 `portable.flag`，即可启用便携数据目录模式。**不能只复制 EXE**。标准安装版仍由 Inno Setup 打包。
 
 ### 仓库结构
 
