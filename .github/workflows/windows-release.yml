@@ -1,0 +1,96 @@
+name: Windows Release - Portable and Installer
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/windows-release.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: windows-release-v4.5.3
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: windows-2022
+    timeout-minutes: 45
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Install .NET 8 SDK (runner only)
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Publish self-contained Windows x64 application
+        shell: pwsh
+        run: |
+          dotnet restore "Source/BiliSnagTide.csproj" --runtime win-x64
+          if ($LASTEXITCODE -ne 0) { throw "Restore failed" }
+          dotnet publish "Source/BiliSnagTide.csproj" --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None -p:DebugSymbols=false --no-restore --output "out/publish"
+          if ($LASTEXITCODE -ne 0) { throw "Publish failed" }
+          if (!(Test-Path "out/publish/BiliSnagTide.exe")) { throw "Expected EXE missing" }
+          if (Test-Path "out/publish/portable.flag") { throw "Installer payload must not contain portable.flag" }
+
+      - name: Package portable ZIP
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "out/assets" | Out-Null
+          Copy-Item -Path "out/publish" -Destination "out/portable" -Recurse
+          Set-Content -Path "out/portable/portable.flag" -Value "Portable data mode" -NoNewline -Encoding utf8
+          Compress-Archive -Path "out/portable/*" -DestinationPath "out/assets/BiliSnagTide-v4.5.3-Windows-x64-Portable.zip" -CompressionLevel Optimal
+          if (!(Test-Path "out/assets/BiliSnagTide-v4.5.3-Windows-x64-Portable.zip")) { throw "Portable ZIP missing" }
+
+      - name: Prepare Inno Setup
+        shell: pwsh
+        run: |
+          $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          if (!(Test-Path $iscc)) {
+            choco install innosetup -y --no-progress
+            if ($LASTEXITCODE -ne 0) { throw "Inno Setup installation failed" }
+          }
+          if (!(Test-Path $iscc)) { throw "ISCC.exe not found" }
+
+      - name: Build standard installer
+        shell: pwsh
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "packaging\BiliSnagTide.iss"
+          if ($LASTEXITCODE -ne 0) { throw "Inno Setup compilation failed" }
+          $installer = "out/installer/BiliSnagTide-v4.5.3-Windows-x64-Setup.exe"
+          if (!(Test-Path $installer)) { throw "Installer EXE missing" }
+          Copy-Item $installer "out/assets/"
+
+      - name: Verify both distribution assets
+        shell: pwsh
+        run: |
+          $a = @(
+            "out/assets/BiliSnagTide-v4.5.3-Windows-x64-Portable.zip",
+            "out/assets/BiliSnagTide-v4.5.3-Windows-x64-Setup.exe"
+          )
+          foreach ($f in $a) {
+            if (!(Test-Path $f)) { throw "Missing asset: $f" }
+            if ((Get-Item $f).Length -lt 1000000) { throw "Suspiciously small asset: $f" }
+            Get-FileHash $f -Algorithm SHA256 | Format-List
+          }
+
+      - name: Publish GitHub Release with both assets
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "v4.5.3"
+          $assets = @(
+            "out/assets/BiliSnagTide-v4.5.3-Windows-x64-Portable.zip",
+            "out/assets/BiliSnagTide-v4.5.3-Windows-x64-Setup.exe"
+          )
+          gh release view $tag --repo $env:GITHUB_REPOSITORY *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $tag $assets --clobber --repo $env:GITHUB_REPOSITORY
+          } else {
+            gh release create $tag $assets --title "BiliSnagTide v4.5.3" --notes-file "packaging/RELEASE_NOTES.md" --target $env:GITHUB_SHA --repo $env:GITHUB_REPOSITORY --latest
+          }
+          if ($LASTEXITCODE -ne 0) { throw "Release publishing failed" }

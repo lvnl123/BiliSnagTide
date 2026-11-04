@@ -101,7 +101,13 @@ public sealed class SettingsModel
 }
 public static class Storage
 {
-    public static readonly string DataDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "BiliSnagTide");
+    // The portable ZIP contains a marker next to BiliSnagTide.exe. It saves all
+    // user settings, favorites and diagnostics under the extracted Data folder.
+    // Installed builds have no marker and use the normal user profile location.
+    public static readonly bool IsPortable = File.Exists(Path.Combine(AppContext.BaseDirectory, "portable.flag"));
+    public static readonly string DataDir = IsPortable
+        ? Path.Combine(AppContext.BaseDirectory, "Data")
+        : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "BiliSnagTide");
     private static readonly string LegacyConfigPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "BiliLiveManager", "settings.json");
     private static readonly string ConfigPath = Path.Combine(DataDir, "settings.json");
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true, PropertyNameCaseInsensitive = true };
@@ -111,7 +117,7 @@ public static class Storage
         {
             // One-time, non-destructive settings migration: never delete legacy data.
             // Deliberately do not copy logs, cookies, or cache files.
-            if (!File.Exists(ConfigPath) && File.Exists(LegacyConfigPath))
+            if (!IsPortable && !File.Exists(ConfigPath) && File.Exists(LegacyConfigPath))
             {
                 Directory.CreateDirectory(DataDir);
                 File.Copy(LegacyConfigPath, ConfigPath, overwrite: false);
