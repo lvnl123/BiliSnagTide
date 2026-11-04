@@ -1,0 +1,37 @@
+# .NET build / publish
+**/bin/
+**/obj/
+**/publish/
+Release/
+Debug/
+.dotnet/
+BiliLiveBuildCache/
+[Bb]uild[Cc]ache/
+[Bb]uild[Ll]og*
+*.log
+*.pdb
+*.deps.json
+*.runtimeconfig.json
+
+# Visual Studio / IDE
+.vs/
+.idea/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Local app data, caches, credentials
+AppData/
+Cache/
+Logs/
+*.tmp
+settings.json
+cookies.json
+*.local.json
+*.secret*
+
+# Misc
+.DS_Store
+Thumbs.db

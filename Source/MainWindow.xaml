@@ -1,0 +1,462 @@
+<Window x:Class="BiliLiveManager.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="BiliSnagTide — Live Source &amp; Danmaku" Icon="App.ico"
+        Width="1440" Height="860" MinWidth="1050" MinHeight="700"
+        WindowStartupLocation="CenterScreen"
+        Closing="Window_Closing" StateChanged="Window_StateChanged">
+  <Window.Resources>
+    <Style x:Key="SidebarItemStyle" TargetType="TabItem">
+      <Setter Property="Foreground" Value="{DynamicResource NavText}"/>
+      <Setter Property="FontSize" Value="13"/>
+      <Setter Property="FontWeight" Value="Medium"/>
+      <Setter Property="Height" Value="46"/>
+      <Setter Property="Margin" Value="10,3"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="TabItem">
+        <Grid ClipToBounds="True">
+          <Border x:Name="NavSurface" CornerRadius="8" Padding="12,0" Background="Transparent">
+            <ContentPresenter ContentSource="Header" VerticalAlignment="Center" HorizontalAlignment="Stretch"/>
+          </Border>
+          <Border x:Name="ActiveRail" Background="{DynamicResource NavIndicator}" CornerRadius="2" Width="3" Height="20"
+                  VerticalAlignment="Center" HorizontalAlignment="Left" Opacity="0"/>
+        </Grid>
+        <ControlTemplate.Triggers>
+          <Trigger Property="IsSelected" Value="True">
+            <Setter TargetName="NavSurface" Property="Background" Value="{DynamicResource NavSelected}"/><Setter TargetName="ActiveRail" Property="Opacity" Value="1"/>
+            <Setter Property="Foreground" Value="{DynamicResource NavActiveText}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+          </Trigger>
+          <MultiTrigger><MultiTrigger.Conditions>
+            <Condition Property="IsMouseOver" Value="True"/>
+            <Condition Property="IsSelected" Value="False"/>
+          </MultiTrigger.Conditions>
+            <Setter TargetName="NavSurface" Property="Background" Value="{DynamicResource NavHover}"/>
+            <Setter Property="Foreground" Value="{DynamicResource NavText}"/>
+          </MultiTrigger>
+        </ControlTemplate.Triggers>
+      </ControlTemplate></Setter.Value></Setter>
+    </Style>
+    <Style x:Key="SectionHeader" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="18"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Foreground" Value="{DynamicResource MainText}"/>
+    </Style>
+    <!-- DataGridCell.Padding alone does not pad a generated TextBlock. Explicit inner margin is required. -->
+    <Style x:Key="ReadableGridText" TargetType="TextBlock">
+      <Setter Property="Margin" Value="14,0,12,0"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
+      <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+      <Setter Property="TextWrapping" Value="NoWrap"/>
+    </Style>
+    <Style x:Key="SoftCaption" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="Foreground" Value="{DynamicResource SubText}"/>
+    </Style>
+  </Window.Resources>
+  <Grid Background="{DynamicResource PageBg}">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="70"/>
+      <RowDefinition Height="*"/>
+      <RowDefinition Height="30"/>
+    </Grid.RowDefinitions>
+    <!-- Command bar: brand, room locator, and account actions are visually distinct. -->
+    <Border Grid.Row="0" Background="{DynamicResource TopBarBg}" BorderBrush="{DynamicResource TopBarBorder}" BorderThickness="0,0,0,1">
+      <Grid Margin="18,0,18,0">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="198"/>
+          <ColumnDefinition Width="*" MinWidth="170"/>
+          <ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
+          <ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+          <Border Background="{DynamicResource BrandMarkBg}" Width="36" Height="36" CornerRadius="10" Margin="0,0,10,0">
+            <Grid><TextBlock Text="≋" FontSize="30" FontWeight="Bold" Foreground="{DynamicResource BrandMarkFg}" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-7,0,0"/></Grid>
+          </Border>
+          <StackPanel VerticalAlignment="Center">
+            <TextBlock Text="BiliSnagTide" FontSize="17" FontWeight="Bold" Foreground="{DynamicResource HeaderText}"/>
+            <TextBlock Text="LIVE SOURCE &amp; DANMAKU" FontSize="12" Foreground="{DynamicResource HeaderMuted}" Margin="0,4,0,0"/>
+          </StackPanel>
+        </StackPanel>
+        <Grid Grid.Column="1" VerticalAlignment="Center" Margin="8,0,10,0">
+          <Border Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource TopBarBorder}" BorderThickness="1" CornerRadius="8"/>
+          <TextBox x:Name="RoomInput" KeyDown="RoomInput_KeyDown" ToolTip="输入 B站直播间号或直播链接"
+                   MinHeight="38" Margin="2" Padding="12,7" BorderThickness="0" Background="Transparent" FontSize="13"/>
+          <TextBlock Text="粘贴房间号，或 live.bilibili.com 链接" IsHitTestVisible="False"
+                     VerticalAlignment="Center" Margin="13,0" FontSize="12" Foreground="{DynamicResource SubText}">
+            <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers>
+              <DataTrigger Binding="{Binding ElementName=RoomInput, Path=Text}" Value=""><Setter Property="Visibility" Value="Visible"/></DataTrigger>
+            </Style.Triggers></Style></TextBlock.Style>
+          </TextBlock>
+        </Grid>
+        <Button Grid.Column="2" x:Name="PasteButton" Content="粘贴" Click="Paste_Click" VerticalAlignment="Center" Height="38" MinHeight="38"/>
+        <Button Grid.Column="3" x:Name="FetchButton" Content="解析直播源" Click="Fetch_Click" Style="{StaticResource PrimaryButton}" VerticalAlignment="Center" Height="38" MinHeight="38"/>
+        <Button Grid.Column="4" Content="取消" Click="Cancel_Click" VerticalAlignment="Center" Height="38" MinHeight="38" Margin="0,0,12,0"/>
+        <Border Grid.Column="5" BorderBrush="{DynamicResource TopBarBorder}" BorderThickness="1,0,0,0" Padding="12,0,0,0">
+          <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <TextBlock x:Name="ConnectionText" Text="就绪" Foreground="{DynamicResource HeaderMuted}" FontSize="12" VerticalAlignment="Center" Margin="0,0,10,0"/>
+            <Button Content="扫码登录" Click="BiliLogin_Click" Style="{StaticResource QuietButton}" Height="38" MinHeight="38"/>
+            <Button Content="浏览器打开" Click="OpenRoom_Click" Style="{StaticResource QuietButton}" Height="38" MinHeight="38" Margin="0"/>
+          </StackPanel>
+        </Border>
+      </Grid>
+    </Border>
+    <TabControl x:Name="Pages" Grid.Row="1" TabStripPlacement="Left" Background="{DynamicResource PageBg}" BorderThickness="0"
+                ItemContainerStyle="{StaticResource SidebarItemStyle}" SelectionChanged="Pages_SelectionChanged">
+      <TabControl.Template>
+        <ControlTemplate TargetType="TabControl">
+          <Grid>
+            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+            <Border x:Name="SidebarPane" Grid.Column="0" Width="226" ClipToBounds="True" Background="{DynamicResource SidebarBg}"
+                    BorderBrush="{DynamicResource NavBorder}" BorderThickness="0,0,1,0">
+              <DockPanel LastChildFill="True">
+                <StackPanel DockPanel.Dock="Top" Margin="11,15,11,12">
+                  <Grid Height="40">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                    <Button x:Name="SidebarToggleButton" Width="40" Height="38" Padding="0"
+                            Click="SidebarToggle_Click" ToolTip="收起 / 展开导航菜单"
+                            AutomationProperties.Name="收起或展开导航菜单"
+                            Style="{StaticResource SidebarToggleStyle}">
+                      <TextBlock x:Name="SidebarToggleGlyph" Text="☰" FontFamily="Segoe UI Symbol"
+                                 FontSize="17" Foreground="{DynamicResource NavText}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Button>
+                    <TextBlock x:Name="SidebarTitle" Grid.Column="1" Text="导航菜单" Margin="12,0,0,0"
+                               FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource NavText}" VerticalAlignment="Center"/>
+                  </Grid>
+                  <TextBlock x:Name="SidebarSectionLabel" Text="WORKSPACE" FontSize="12" Foreground="{DynamicResource NavMuted}"
+                             FontWeight="SemiBold" Margin="10,16,0,0"/>
+                </StackPanel>
+                <StackPanel x:Name="SidebarFooter" DockPanel.Dock="Bottom" Margin="20,14,16,17">
+                  <Border Height="1" Background="{DynamicResource NavBorder}" Margin="0,0,0,14"/>
+                  <TextBlock Text="BILISNAGTIDE  /  v4.5.2" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource NavText}"/>
+                  <TextBlock Text="Windows · .NET 8" FontSize="12" Foreground="{DynamicResource NavMuted}" Margin="0,5,0,0"/>
+                </StackPanel>
+                <TabPanel IsItemsHost="True" Margin="0,0,0,0" KeyboardNavigation.TabIndex="1"/>
+              </DockPanel>
+            </Border>
+            <Border Grid.Column="1" Background="{DynamicResource PageBg}">
+              <ContentPresenter x:Name="PART_SelectedContentHost" ContentSource="SelectedContent"/>
+            </Border>
+          </Grid>
+        </ControlTemplate>
+      </TabControl.Template>
+      <!-- SOURCE WORKSPACE: one restrained command hierarchy and one flexible table. -->
+      <TabItem x:Name="MainTab">
+        <TabItem.Header><StackPanel Orientation="Horizontal"><TextBlock Text="&#xE80F;" FontFamily="Segoe MDL2 Assets" Width="30" FontSize="15" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=TabItem}}"/><TextBlock Text="直播源" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=TabItem}}"/></StackPanel></TabItem.Header>
+        <Grid Margin="24,19,24,18">
+          <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*" MinHeight="190"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+          <Grid Grid.Row="0" Margin="0,0,0,14">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="直播源工作区" Style="{StaticResource DisplayHeading}"/>
+              <TextBlock Text="解析直播源、查看可用画质，并交给 PotPlayer 播放" Foreground="{DynamicResource SubText}" FontSize="13" Margin="0,5,0,0"/>
+            </StackPanel>
+            <Border Grid.Column="1" CornerRadius="7" Padding="11,6" Background="{DynamicResource AccentSoft}" VerticalAlignment="Center">
+              <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE753;" FontFamily="Segoe MDL2 Assets" FontSize="12" Foreground="{DynamicResource BlueBrush}" Margin="0,0,8,0"/><TextBlock Text="Source Explorer" Foreground="{DynamicResource BlueBrush}" FontWeight="SemiBold" FontSize="12"/></StackPanel>
+            </Border>
+          </Grid>
+          <Border Grid.Row="1" Style="{StaticResource SurfaceCard}" Padding="18,15" Margin="0,0,0,14">
+            <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="130"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+              <Border Width="112" Height="76" CornerRadius="8" Background="{DynamicResource AccentSoft}" ClipToBounds="True" HorizontalAlignment="Left" VerticalAlignment="Center"><Image x:Name="RoomCover" Stretch="UniformToFill"/></Border>
+              <StackPanel Grid.Column="1" Margin="2,0,18,0" VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                  <Border Width="28" Height="28" CornerRadius="14" Background="{DynamicResource AccentSoft}" ClipToBounds="True" Margin="0,0,9,0"><Image x:Name="RoomAvatar" Stretch="UniformToFill"/></Border>
+                  <TextBlock x:Name="RoomTitle" Text="尚未载入直播间" FontSize="17" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                </StackPanel>
+                <TextBlock x:Name="RoomOwner" Text="输入房间号或链接，开始解析直播源" FontSize="12.5" Foreground="{DynamicResource SubText}" Margin="0,6,0,0" TextTrimming="CharacterEllipsis"/>
+                <TextBlock x:Name="RoomStatus" Text="等待获取直播状态" FontSize="12" Foreground="{DynamicResource SubText}" Margin="0,5,0,0"/>
+              </StackPanel>
+              <StackPanel Grid.Column="2" VerticalAlignment="Center"><Button Content="☆ 收藏" Click="Favorite_Click" Margin="0,0,0,7" MinWidth="100"/><Button Content="画质诊断" Click="QualityDiagOpen_Click" Margin="0" MinWidth="100"/></StackPanel>
+            </Grid>
+          </Border>
+          <Border Grid.Row="2" Style="{StaticResource SurfaceCard}" Padding="0" Margin="0,0,0,14">
+            <Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+              <Grid Grid.Row="0" Margin="18,13,18,12">
+                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                <Grid>
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                  <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="直播线路" Style="{StaticResource SectionHeader}" VerticalAlignment="Center"/>
+                    <Border Background="{DynamicResource AccentSoft}" CornerRadius="10" Padding="9,3" Margin="10,0,0,0" VerticalAlignment="Center">
+                      <TextBlock Foreground="{DynamicResource BlueBrush}" FontSize="12" FontWeight="SemiBold"><Run Text="{Binding ElementName=StreamGrid, Path=Items.Count, Mode=OneWay}"/><Run Text=" 条"/></TextBlock>
+                    </Border>
+                  </StackPanel>
+                  <TextBlock Grid.Column="1" Text="双击线路直接播放" Style="{StaticResource SoftCaption}" VerticalAlignment="Center"/>
+                </Grid>
+                <Border x:Name="QualityLoginHint" Grid.Row="1" Background="{DynamicResource HintBg}" BorderBrush="{DynamicResource HintBorder}" BorderThickness="1"
+                        CornerRadius="7" HorizontalAlignment="Left" Margin="0,10,0,0" Padding="9,5" ToolTip="登录后可重新扫描当前直播间的画质；实际可用画质仍由B站决定。">
+                  <WrapPanel VerticalAlignment="Center">
+                    <TextBlock Text="&#xE7BA;" FontFamily="Segoe MDL2 Assets" FontSize="13" Foreground="{DynamicResource HintText}" VerticalAlignment="Center" Margin="0,0,7,0"/>
+                    <TextBlock Text="画质不完整？登录后重新解析" FontSize="12" Foreground="{DynamicResource HintText}" VerticalAlignment="Center"/>
+                    <Button x:Name="QualityLoginHintButton" Content="扫码登录" Click="BiliLogin_Click" Background="{DynamicResource HintButtonBg}" Foreground="{DynamicResource HintButtonFg}"
+                            MinHeight="29" Padding="10,5" FontWeight="SemiBold" FontSize="12" BorderThickness="0" Margin="9,0,0,0"/>
+                  </WrapPanel>
+                </Border>
+              </Grid>
+              <!-- Flexible filter tray: wrap rather than clip controls when sidebar is expanded. -->
+              <Border Grid.Row="1" Background="{DynamicResource AltRowBg}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,1,0,1" Padding="17,8">
+                <WrapPanel VerticalAlignment="Center" Orientation="Horizontal">
+                  <TextBlock Text="画质" Style="{StaticResource SoftCaption}" VerticalAlignment="Center" Margin="0,0,7,0"/>
+                  <ComboBox x:Name="QualityChoice" Width="210" Margin="0,3,14,3" SelectionChanged="Filter_Changed">
+                    <ComboBoxItem Content="全部画质" Tag="all" IsSelected="True"/><ComboBoxItem Content="360P 流畅（参考）" Tag="80"/><ComboBoxItem Content="480P 高清（参考）" Tag="150"/><ComboBoxItem Content="720P 超清（参考）" Tag="250"/><ComboBoxItem Content="1080P 蓝光（参考）" Tag="400"/><ComboBoxItem Content="原画（实际规格待检测）" Tag="10000"/><ComboBoxItem Content="2K 极清（参考）" Tag="15000"/><ComboBoxItem Content="4K 超高清（待检测）" Tag="20000"/><ComboBoxItem Content="杜比（实际规格待检测）" Tag="30000"/>
+                  </ComboBox>
+                  <TextBlock Text="格式" Style="{StaticResource SoftCaption}" VerticalAlignment="Center" Margin="0,0,7,0"/>
+                  <ComboBox x:Name="FormatChoice" Width="144" Margin="0,3,14,3" SelectionChanged="Filter_Changed">
+                    <ComboBoxItem Content="全部格式" Tag="all" IsSelected="True"/><ComboBoxItem Content="HTTP-FLV" Tag="flv"/><ComboBoxItem Content="HLS / TS" Tag="ts"/><ComboBoxItem Content="HLS / fMP4" Tag="fmp4"/>
+                  </ComboBox>
+                  <TextBlock Text="编码" Style="{StaticResource SoftCaption}" VerticalAlignment="Center" Margin="0,0,7,0"/>
+                  <ComboBox x:Name="CodecChoice" Width="135" Margin="0,3,0,3" SelectionChanged="Filter_Changed">
+                    <ComboBoxItem Content="全部编码" Tag="all" IsSelected="True"/><ComboBoxItem Content="H.264" Tag="avc"/><ComboBoxItem Content="H.265" Tag="hevc"/>
+                  </ComboBox>
+                </WrapPanel>
+              </Border>
+              <Grid Grid.Row="2" ClipToBounds="True">
+                <DataGrid x:Name="StreamGrid" BorderThickness="0" SelectionChanged="StreamGrid_SelectionChanged" MouseDoubleClick="StreamGrid_MouseDoubleClick" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                  <DataGrid.Columns>
+                    <DataGridTextColumn ElementStyle="{StaticResource ReadableGridText}" Header="画质（QN）" Binding="{Binding QualityLabel}" Width="210"/>
+                    <DataGridTextColumn ElementStyle="{StaticResource ReadableGridText}" Header="流格式" Binding="{Binding FormatLabel}" Width="95"/>
+                    <DataGridTextColumn ElementStyle="{StaticResource ReadableGridText}" Header="编码" Binding="{Binding CodecLabel}" Width="104"/>
+                    <DataGridTextColumn ElementStyle="{StaticResource ReadableGridText}" Header="CDN 线路" Binding="{Binding Host}" Width="*" MinWidth="160"/>
+                    <DataGridTextColumn ElementStyle="{StaticResource ReadableGridText}" Header="分辨率" Binding="{Binding VideoSize}" Width="95"/>
+                    <DataGridTextColumn ElementStyle="{StaticResource ReadableGridText}" Header="过期" Binding="{Binding ExpiresLabel}" Width="88"/>
+                    <DataGridTextColumn ElementStyle="{StaticResource ReadableGridText}" Header="连接" Binding="{Binding TestStatus}" Width="100"/>
+                  </DataGrid.Columns>
+                </DataGrid>
+                <Border x:Name="StreamEmptyHint" Background="{DynamicResource CardBg}" Margin="1">
+                  <Border.Style><Style TargetType="Border"><Setter Property="Visibility" Value="Visible"/><Style.Triggers><DataTrigger Binding="{Binding ElementName=StreamGrid, Path=HasItems}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></Border.Style>
+                  <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Border Width="52" Height="52" CornerRadius="14" Background="{DynamicResource AccentSoft}"><TextBlock Text="&#xE753;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource BlueBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="22"/></Border>
+                    <TextBlock Text="尚无直播线路" Margin="0,11,0,0" FontWeight="SemiBold" HorizontalAlignment="Center" FontSize="14"/>
+                    <TextBlock Text="输入房间号并点击解析，即可选择播放地址" Margin="0,5,0,0" Style="{StaticResource SoftCaption}" HorizontalAlignment="Center"/>
+                  </StackPanel>
+                </Border>
+              </Grid>
+            </Grid>
+          </Border>
+          <Border Grid.Row="3" Style="{StaticResource SurfaceCard}" Padding="18,12">
+            <StackPanel>
+              <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                <StackPanel VerticalAlignment="Center"><TextBlock Text="线路操作" FontWeight="SemiBold" FontSize="14"/><TextBlock x:Name="MonitorStatusText" Text="尚未开始智能监测" Foreground="{DynamicResource SubText}" FontSize="12" Margin="0,4,0,0"/></StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                  <Button Content="复制 URL" Click="Copy_Click"/>
+                  <Button Content="智能播放" Click="SmartPlay_Click"/>
+                  <Button Content="使用 PotPlayer 播放" Style="{StaticResource PrimaryButton}" Click="Play_Click" Margin="0"/>
+                </StackPanel>
+              </Grid>
+              <Expander Margin="0,9,0,0" IsExpanded="False"><Expander.Header><TextBlock Text="更多操作与原始地址" FontSize="12" Foreground="{DynamicResource SubText}"/></Expander.Header>
+                <StackPanel Margin="0,9,0,0">
+                  <TextBlock Text="原始地址可能包含时效签名，请勿公开分享" Style="{StaticResource SoftCaption}" Margin="0,0,0,6"/>
+                  <TextBox x:Name="UrlPreview" MinHeight="45" MaxHeight="65" IsReadOnly="True" FontSize="12" FontFamily="Consolas" TextWrapping="NoWrap" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"/>
+                  <WrapPanel Margin="0,9,0,0">
+                    <Button Content="保存地址" Click="SaveTxt_Click"/><Button Content="媒体信息" Click="MediaProbe_Click"/><Button Content="停止监测" Click="StopSmart_Click"/><Button Content="导出 M3U" Click="Export_Click"/><Button Content="代理播放" Click="ProxyPlay_Click"/><Button Content="复制代理地址" Click="ProxyCopy_Click"/>
+                  </WrapPanel>
+                </StackPanel>
+              </Expander>
+            </StackPanel>
+          </Border>
+        </Grid>
+      </TabItem>
+      <!-- Favorites -->
+      <TabItem><TabItem.Header><StackPanel Orientation="Horizontal" VerticalAlignment="Center"><TextBlock Text="&#xE734;" FontFamily="Segoe MDL2 Assets" FontSize="15" Width="31" VerticalAlignment="Center" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=TabItem}}"/><TextBlock Text="收藏直播间" VerticalAlignment="Center" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=TabItem}}"/></StackPanel></TabItem.Header><Grid Margin="24,20"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions><WrapPanel Margin="0,0,0,12"><TextBlock Text="我的收藏" FontSize="23" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,15,0"/><Button Content="刷新全部开播状态" Click="RefreshFav_Click"/><Button Content="打开选中直播间" Click="OpenFav_Click"/><Button Content="取消收藏" Click="RemoveFav_Click"/><Button Content="切换选中通知开关" Click="MuteFav_Click"/></WrapPanel>
+        <DataGrid x:Name="FavoriteGrid" Grid.Row="1" MouseDoubleClick="FavoriteGrid_MouseDoubleClick"><DataGrid.Columns><DataGridTemplateColumn Header="头像" Width="64"><DataGridTemplateColumn.CellTemplate><DataTemplate><Border Width="34" Height="34" CornerRadius="17" Background="{DynamicResource AccentSoft}" ClipToBounds="True"><Image Source="{Binding FaceUrl}" Width="34" Height="34" Stretch="UniformToFill"/></Border></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn><DataGridTextColumn ElementStyle="{StaticResource ReadableGridText}" Header="房间号" Binding="{Binding RoomId}" Width="110"/><DataGridTextColumn ElementStyle="{StaticResource ReadableGridText}" Header="主播" Binding="{Binding Name}" Width="150"/><DataGridTextColumn ElementStyle="{StaticResource ReadableGridText}" Header="直播标题" Binding="{Binding Title}" Width="*"/><DataGridTextColumn ElementStyle="{StaticResource ReadableGridText}" Header="开播状态" Binding="{Binding Status}" Width="105"/><DataGridTextColumn ElementStyle="{StaticResource ReadableGridText}" Header="开播时间" Binding="{Binding LiveTime}" Width="135"/><DataGridCheckBoxColumn Header="免打扰" Binding="{Binding Muted}" Width="82"/><DataGridTextColumn ElementStyle="{StaticResource ReadableGridText}" Header="检查时间" Binding="{Binding CheckedText}" Width="125"/></DataGrid.Columns></DataGrid>
+        <TextBlock Grid.Row="2" Text="定时检查仅在客户端运行时进行。开播通知使用 Windows 系统托盘；首次检查不会误发开播提醒。" FontSize="12" Foreground="{DynamicResource SubText}" Margin="0,10,0,0"/>
+      </Grid></TabItem>
+      <!-- Search -->
+      <TabItem><TabItem.Header><StackPanel Orientation="Horizontal" VerticalAlignment="Center"><TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="15" Width="31" VerticalAlignment="Center" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=TabItem}}"/><TextBlock Text="搜索直播" VerticalAlignment="Center" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=TabItem}}"/></StackPanel></TabItem.Header><Grid Margin="24,20"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions><StackPanel Orientation="Horizontal" Margin="0,0,0,12"><TextBox x:Name="SearchInput" Width="360" ToolTip="主播或直播间关键词"/><Button Content="搜索 B站直播间" Style="{StaticResource PrimaryButton}" Margin="10,0,0,0" Click="Search_Click"/><Button Content="浏览器搜索" Click="BrowserSearch_Click"/></StackPanel><DataGrid x:Name="SearchGrid" Grid.Row="1" MouseDoubleClick="SearchGrid_MouseDoubleClick"><DataGrid.Columns><DataGridTextColumn ElementStyle="{StaticResource ReadableGridText}" Header="房间号" Binding="{Binding RoomId}" Width="130"/><DataGridTextColumn ElementStyle="{StaticResource ReadableGridText}" Header="主播" Binding="{Binding Uname}" Width="190"/><DataGridTextColumn ElementStyle="{StaticResource ReadableGridText}" Header="标题" Binding="{Binding Title}" Width="*"/><DataGridTextColumn ElementStyle="{StaticResource ReadableGridText}" Header="状态" Binding="{Binding StatusLabel}" Width="120"/></DataGrid.Columns></DataGrid><TextBlock Grid.Row="2" Foreground="{DynamicResource SubText}" Margin="0,10,0,0" Text="关键词搜索依赖 B站 WBI 接口；如返回鉴权或限流错误，可使用浏览器搜索或输入房间号。"/></Grid></TabItem>
+      <!-- PotPlayer danmaku companion: separate real-time stream, not a duplicate of playback analysis. -->
+      <TabItem x:Name="DanmakuTab"><TabItem.Header><StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8F2;" FontFamily="Segoe MDL2 Assets" FontSize="15" Width="29" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=TabItem}}"/><TextBlock Text="弹幕伴侣" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=TabItem}}"/></StackPanel></TabItem.Header>
+        <Grid Margin="25,20,25,19">
+          <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+          <Grid Grid.Row="0" Margin="0,0,0,14"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+            <StackPanel><TextBlock Text="弹幕伴侣" FontWeight="SemiBold" FontSize="24"/><TextBlock Text="实时消息 · 弹幕悬浮窗 · 连接状态与调试" Foreground="{DynamicResource SubText}" FontSize="12" Margin="0,5,0,0"/></StackPanel>
+            <Border Grid.Column="1" Background="{DynamicResource AccentSoft}" CornerRadius="9" Padding="12,7" VerticalAlignment="Center"><TextBlock Text="DANMAKU LIVE" Foreground="{DynamicResource BlueBrush}" FontSize="12" FontWeight="Bold"/></Border>
+          </Grid>
+          <Border Grid.Row="1" Style="{StaticResource SurfaceCard}" Padding="17" Margin="0,0,0,12">
+            <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+              <StackPanel VerticalAlignment="Center">
+                <TextBlock x:Name="DanmakuRoomText" Text="尚未连接 · 输入直播间后开始" FontSize="15" FontWeight="SemiBold"/>
+                <TextBlock x:Name="DanmakuStatusText" Text="弹幕连接和直播视频播放相互独立。" Foreground="{DynamicResource SubText}" FontSize="12" Margin="0,6,0,0" TextWrapping="Wrap"/>
+              </StackPanel>
+              <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <Button x:Name="DanmakuStartButton" Content="连接弹幕" Click="DanmakuStart_Click" Style="{StaticResource PrimaryButton}"/>
+                <Button Content="断开" Click="DanmakuStop_Click"/>
+                <Button x:Name="DanmakuFloatButton" Content="打开弹幕浮窗" Click="DanmakuFloat_Click"/>
+              </StackPanel>
+            </Grid>
+          </Border>
+          <Border Grid.Row="2" Style="{StaticResource SurfaceCard}" Padding="10,12" Margin="0,0,0,12">
+            <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="1.1*"/><ColumnDefinition Width="1*"/><ColumnDefinition Width="1*"/><ColumnDefinition Width="1*"/><ColumnDefinition Width="1*"/></Grid.ColumnDefinitions>
+              <StackPanel Margin="9,0"><TextBlock Text="连接阶段" FontSize="12" Foreground="{DynamicResource SubText}"/><TextBlock x:Name="DanmakuPhaseText" Text="未连接" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/></StackPanel>
+              <StackPanel Grid.Column="1" Margin="9,0"><TextBlock Text="认证" FontSize="12" Foreground="{DynamicResource SubText}"/><TextBlock x:Name="DanmakuAuthText" Text="未认证" FontSize="13" FontWeight="SemiBold"/></StackPanel>
+              <StackPanel Grid.Column="2" Margin="9,0"><TextBlock Text="消息速率" FontSize="12" Foreground="{DynamicResource SubText}"/><TextBlock x:Name="DanmakuRateText" Text="0 条/分钟" FontSize="13" FontWeight="SemiBold"/></StackPanel>
+              <StackPanel Grid.Column="3" Margin="9,0"><TextBlock Text="心跳" FontSize="12" Foreground="{DynamicResource SubText}"/><TextBlock x:Name="DanmakuHeartText" Text="心跳应答：0" FontSize="12" FontWeight="SemiBold"/></StackPanel>
+              <StackPanel Grid.Column="4" Margin="9,0"><TextBlock Text="重连 / 尝试" FontSize="12" Foreground="{DynamicResource SubText}"/><TextBlock x:Name="DanmakuReconnectText" Text="连接尝试：0" FontSize="12" FontWeight="SemiBold"/></StackPanel>
+            </Grid>
+          </Border>
+          <Grid Grid.Row="3"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="330"/></Grid.ColumnDefinitions>
+            <Border Grid.Column="0" Style="{StaticResource SurfaceCard}" Padding="0" Margin="0,0,13,0">
+              <Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                <Grid Margin="17,15,17,9"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                  <StackPanel><TextBlock Text="实时互动消息" Style="{StaticResource SectionHeader}"/>
+                    <TextBlock x:Name="DanmakuHostText" Text="节点：—" Foreground="{DynamicResource SubText}" FontSize="12" Margin="0,4,0,0"/>
+                    <TextBlock x:Name="DanmakuActivityText" Text="接收帧：0 · 人气参考值：— · 最近心跳：暂无" Foreground="{DynamicResource SubText}" FontSize="12" Margin="0,3,0,0"/>
+                  </StackPanel>
+                  <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="DanmakuJumpLatest" Content="↓ 回到最新" Click="DanmakuJumpLatest_Click" Visibility="Collapsed" ToolTip="手动上翻后显示新消息数量；点击恢复跟随" Style="{StaticResource PrimaryButton}" MinHeight="28" Padding="8,4" Margin="0,0,8,0"/>
+                    <TextBlock x:Name="DanmakuCounterText" Text="收到 0 · 显示 0" FontSize="12" Foreground="{DynamicResource SubText}" VerticalAlignment="Center"/>
+                  </StackPanel>
+                </Grid>
+                <ListBox x:Name="DanmakuList" Grid.Row="1" Background="Transparent" BorderThickness="0" Margin="9,0,9,0" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.CanContentScroll="False" VirtualizingPanel.IsVirtualizing="False">
+                  <ListBox.ItemTemplate><DataTemplate>
+                    <Border Padding="5,2" CornerRadius="7">
+                      <Border.Style><Style TargetType="Border">
+                        <Setter Property="Background" Value="Transparent"/>
+                        <Style.Triggers><DataTrigger Binding="{Binding IsHighlighted}" Value="True">
+                          <Setter Property="Background" Value="{DynamicResource AccentSoft}"/>
+                        </DataTrigger></Style.Triggers>
+                      </Style></Border.Style>
+                      <Grid Margin="6,7,10,7"><Grid.ColumnDefinitions><ColumnDefinition Width="58"/><ColumnDefinition Width="116"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                        <TextBlock Text="{Binding TimeLabel}" Foreground="{DynamicResource SubText}" FontSize="12"/>
+                        <TextBlock Grid.Column="1" Text="{Binding User}" FontSize="12" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" ToolTip="{Binding User}"/>
+                        <TextBlock Grid.Column="2" Text="{Binding Text}" FontSize="12" TextWrapping="Wrap"/>
+                      </Grid>
+                    </Border>
+                  </DataTemplate></ListBox.ItemTemplate>
+                </ListBox>
+                <Grid Grid.Row="2" Margin="17,9,17,12"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                  <StackPanel><TextBlock x:Name="DanmakuTypeText" Text="礼物 0 · SC 0" FontSize="12" Foreground="{DynamicResource SubText}"/><TextBlock x:Name="DanmakuDroppedText" Text="队列正常" FontSize="12" Foreground="{DynamicResource SubText}" Margin="0,3,0,0"/></StackPanel>
+                  <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button Content="复制选中消息" Click="DanmakuCopySelected_Click"/>
+                    <Button Content="清空列表" Click="DanmakuClear_Click"/>
+                  </StackPanel>
+                </Grid>
+              </Grid>
+            </Border>
+            <Border Grid.Column="1" Style="{StaticResource SurfaceCard}" Padding="0">
+              <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Margin="17,17,17,20">
+                  <TextBlock Text="消息筛选" Style="{StaticResource SectionHeader}" Margin="0,0,0,10"/>
+                  <TextBlock Text="只显示包含以下关键词" FontSize="12"/><TextBox x:Name="DanmakuKeyword" TextChanged="DanmakuKeyword_TextChanged" Margin="0,5,0,9" ToolTip="以逗号分隔，可匹配消息或昵称"/>
+                  <TextBlock Text="屏蔽包含以下词语的消息" FontSize="12"/><TextBox x:Name="DanmakuExclude" TextChanged="DanmakuKeyword_TextChanged" Margin="0,5,0,9" ToolTip="多个词语用逗号分隔"/>
+                  <TextBlock Text="忽略用户昵称" FontSize="12"/><TextBox x:Name="DanmakuIgnoredUsers" TextChanged="DanmakuKeyword_TextChanged" Margin="0,5,0,11" ToolTip="输入完整昵称，以逗号分隔"/>
+                  <CheckBox x:Name="DanmakuShowGift" Content="显示礼物" IsChecked="False" Checked="DanmakuFilter_Changed" Unchecked="DanmakuFilter_Changed" Margin="0,3,0,8"/>
+                  <CheckBox x:Name="DanmakuShowSc" Content="显示醒目留言 (SC)" IsChecked="True" Checked="DanmakuFilter_Changed" Unchecked="DanmakuFilter_Changed" Margin="0,3,0,8"/>
+                  <CheckBox x:Name="DanmakuDedupe" Content="5秒内重复消息去重" IsChecked="True" Margin="0,3,0,8"/>
+                  <CheckBox x:Name="DanmakuPaused" Content="手动暂停自动跟随" IsChecked="False" Checked="DanmakuPause_Changed" Unchecked="DanmakuPause_Changed" Margin="0,3,0,8"/>
+                  <CheckBox x:Name="DanmakuFreeze" Content="冻结列表更新（继续接收）" IsChecked="False" Margin="0,3,0,7"/>
+                  <TextBlock Text="关注词高亮（不影响过滤）" FontSize="12" Margin="0,7,0,0"/>
+                  <TextBox x:Name="DanmakuFocusWords" TextChanged="DanmakuFocus_TextChanged" Margin="0,5,0,7" ToolTip="用逗号分隔；命中的消息在列表和悬浮窗中高亮"/>
+                  <Border Height="1" Background="{DynamicResource LineBrush}" Margin="0,9,0,13"/>
+                  <TextBlock Text="悬浮窗" Style="{StaticResource SectionHeader}" Margin="0,0,0,8"/>
+                  <CheckBox x:Name="DanmakuTopmost" Content="始终置顶" IsChecked="True" Checked="DanmakuTopmost_Changed" Unchecked="DanmakuTopmost_Changed" Margin="0,3,0,7"/>
+                  <TextBlock Text="透明度" FontSize="12"/><Slider x:Name="DanmakuOpacitySlider" Minimum="0.45" Maximum="1" Value="0.87" ValueChanged="DanmakuOpacity_Changed" Margin="0,4,0,9"/>
+                  <TextBlock Text="字体大小" FontSize="12"/><Slider x:Name="DanmakuFontSlider" Minimum="10" Maximum="22" Value="13" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="DanmakuFont_Changed" Margin="0,4,0,9"/>
+                  <TextBlock Text="浮窗最多保留消息数" FontSize="12"/><Slider x:Name="DanmakuFloatCount" Minimum="3" Maximum="25" Value="12" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="DanmakuFloatCount_Changed" Margin="0,4,0,9"/>
+                  <Border Height="1" Background="{DynamicResource LineBrush}" Margin="0,9,0,13"/>
+                  <TextBlock Text="测试与调试" Style="{StaticResource SectionHeader}" Margin="0,0,0,7"/>
+                  <WrapPanel Margin="0,0,0,8"><Button Content="离线协议自测" Click="DanmakuSelfTest_Click"/><Button Content="模拟消息" Click="DanmakuDemo_Click"/><Button Content="滚动 UI 自测" Click="DanmakuScrollSelfTest_Click"/></WrapPanel>
+                  <WrapPanel Margin="0,0,0,8"><Button Content="网络接口诊断" Click="DanmakuNetworkTest_Click"/><Button Content="复制脱敏报告" Click="DanmakuCopyDiagnostic_Click"/></WrapPanel>
+                  <TextBox x:Name="DanmakuDiagnosticText" Height="150" IsReadOnly="True" FontFamily="Consolas" FontSize="12" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top"/>
+                  <TextBlock Text="不会保存弹幕正文、Cookie 或 Token。网络诊断会请求一次B站令牌接口，不会尝试绕过风控。" Foreground="{DynamicResource SubText}" FontSize="12" TextWrapping="Wrap" Margin="0,7,0,0"/>
+                </StackPanel>
+              </ScrollViewer>
+            </Border>
+          </Grid>
+          <TextBlock Grid.Row="4" Text="离线自测只验证协议解析，网络诊断只检查令牌获取；只有“已认证”并持续收到消息/心跳，才能确认实时弹幕连接正常。" Foreground="{DynamicResource SubText}" FontSize="12" TextWrapping="Wrap" Margin="0,12,0,0"/>
+        </Grid>
+      </TabItem>
+      <!-- Batch -->
+      <TabItem><TabItem.Header><StackPanel Orientation="Horizontal" VerticalAlignment="Center"><TextBlock Text="&#xE8FD;" FontFamily="Segoe MDL2 Assets" FontSize="15" Width="31" VerticalAlignment="Center" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=TabItem}}"/><TextBlock Text="批量与 M3U" VerticalAlignment="Center" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=TabItem}}"/></StackPanel></TabItem.Header><Grid Margin="24,20"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="175"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions><TextBlock Text="批量解析与播放列表" FontWeight="SemiBold" FontSize="25" Margin="0,0,0,10"/><TextBox x:Name="BatchInput" Grid.Row="1" AcceptsReturn="True" TextWrapping="Wrap" VerticalContentAlignment="Top" VerticalScrollBarVisibility="Auto" Text="" ToolTip="每行一个房间号或直播间链接；空白时使用收藏列表"/>
+        <WrapPanel Grid.Row="2" Margin="0,13,0,12"><Button Content="获取列表" Style="{StaticResource PrimaryButton}" Click="BatchFetch_Click"/><Button Content="从收藏填入" Click="FillBatch_Click"/><Button Content="导出原始 M3U" Click="BatchExport_Click"/><Button Content="导出本地固定 M3U" Click="BatchProxyExport_Click"/><Button Content="清空结果" Click="BatchClear_Click"/></WrapPanel>
+        <DataGrid x:Name="BatchGrid" Grid.Row="3"><DataGrid.Columns><DataGridTextColumn ElementStyle="{StaticResource ReadableGridText}" Header="房间号" Binding="{Binding RoomId}" Width="125"/><DataGridTextColumn ElementStyle="{StaticResource ReadableGridText}" Header="标题" Binding="{Binding Title}" Width="*"/><DataGridTextColumn ElementStyle="{StaticResource ReadableGridText}" Header="格式" Binding="{Binding Format}" Width="140"/><DataGridTextColumn ElementStyle="{StaticResource ReadableGridText}" Header="处理状态" Binding="{Binding Action}" Width="150"/></DataGrid.Columns></DataGrid>
+      </Grid></TabItem>
+      <!-- History -->
+      <TabItem><TabItem.Header><StackPanel Orientation="Horizontal" VerticalAlignment="Center"><TextBlock Text="&#xE823;" FontFamily="Segoe MDL2 Assets" FontSize="15" Width="31" VerticalAlignment="Center" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=TabItem}}"/><TextBlock Text="播放历史" VerticalAlignment="Center" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=TabItem}}"/></StackPanel></TabItem.Header><Grid Margin="24,20"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions><WrapPanel Margin="0,0,0,12"><TextBlock Text="播放与操作历史" FontSize="23" FontWeight="SemiBold" Margin="0,0,16,0"/><Button Content="回到选中直播间" Click="HistoryOpen_Click"/><Button Content="清空历史" Click="HistoryClear_Click"/></WrapPanel><DataGrid x:Name="HistoryGrid" Grid.Row="1" MouseDoubleClick="HistoryGrid_MouseDoubleClick"><DataGrid.Columns><DataGridTextColumn ElementStyle="{StaticResource ReadableGridText}" Header="时间" Binding="{Binding TimeText}" Width="155"/><DataGridTextColumn ElementStyle="{StaticResource ReadableGridText}" Header="房间号" Binding="{Binding RoomId}" Width="120"/><DataGridTextColumn ElementStyle="{StaticResource ReadableGridText}" Header="标题" Binding="{Binding Title}" Width="*"/><DataGridTextColumn ElementStyle="{StaticResource ReadableGridText}" Header="操作" Binding="{Binding Action}" Width="150"/><DataGridTextColumn ElementStyle="{StaticResource ReadableGridText}" Header="格式" Binding="{Binding Format}" Width="125"/></DataGrid.Columns></DataGrid></Grid></TabItem>
+      <!-- Quality matrix and actionable diagnostics (replaces redundant embedded web preview) -->
+      <TabItem><TabItem.Header><StackPanel Orientation="Horizontal" VerticalAlignment="Center"><TextBlock Text="&#xE9D9;" FontFamily="Segoe MDL2 Assets" FontSize="15" Width="31" VerticalAlignment="Center" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=TabItem}}"/><TextBlock Text="画质矩阵" VerticalAlignment="Center" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=TabItem}}"/></StackPanel></TabItem.Header>
+        <Grid Margin="24,20"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+          <Grid Margin="0,0,0,15"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+            <StackPanel><TextBlock Text="画质与直播源诊断" FontSize="23" FontWeight="SemiBold" Foreground="{DynamicResource MainText}"/>
+              <TextBlock Text="逐档请求QN画质代码；优先显示B站原生标签，分辨率/FPS由媒体探测确认" Style="{StaticResource SoftCaption}" Margin="0,7,0,0"/></StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"><Button Content="重新扫描全部画质" Style="{StaticResource PrimaryButton}" Click="ScanQuality_Click"/>
+              <Button Content="复制无敏感信息报告" Click="CopyQuality_Click" Margin="0"/></StackPanel></Grid>
+          <Border Grid.Row="1" Style="{StaticResource SurfaceCard}" Padding="18,16" Margin="0,0,0,14"><StackPanel>
+            <TextBlock x:Name="QualitySummaryText" Text="尚未扫描。先在顶部输入房间号并获取直播源。" FontWeight="SemiBold" FontSize="15" TextWrapping="Wrap"/>
+            <TextBlock x:Name="QualityAdvertisedText" Text="接口报告的可选画质：未知" Foreground="{DynamicResource SubText}" Margin="0,7,0,0" TextWrapping="Wrap"/>
+            <TextBlock x:Name="QualityScanTimeText" Text="" Foreground="{DynamicResource SubText}" Margin="0,5,0,0"/></StackPanel></Border>
+          <Border Grid.Row="2" Style="{StaticResource SurfaceCard}" Padding="0"><DataGrid x:Name="QualityGrid" BorderThickness="0" AutoGenerateColumns="False" HeadersVisibility="Column" IsReadOnly="True" SelectionMode="Single">
+            <DataGrid.Columns><DataGridTextColumn ElementStyle="{StaticResource ReadableGridText}" Header="请求画质" Binding="{Binding RequestedLabel}" Width="205"/>
+              <DataGridTextColumn ElementStyle="{StaticResource ReadableGridText}" Header="接口声明支持" Binding="{Binding Advertised}" Width="105"/>
+              <DataGridTextColumn ElementStyle="{StaticResource ReadableGridText}" Header="请求结果" Binding="{Binding Status}" Width="115"/>
+              <DataGridTextColumn ElementStyle="{StaticResource ReadableGridText}" Header="实际返回画质" Binding="{Binding ActualQualities}" Width="310"/>
+              <DataGridTextColumn ElementStyle="{StaticResource ReadableGridText}" Header="源数量" Binding="{Binding StreamCount}" Width="82"/>
+              <DataGridTextColumn ElementStyle="{StaticResource ReadableGridText}" Header="格式" Binding="{Binding Formats}" Width="155"/>
+              <DataGridTextColumn ElementStyle="{StaticResource ReadableGridText}" Header="说明 / 错误" Binding="{Binding Detail}" Width="*" MinWidth="220"/></DataGrid.Columns>
+          </DataGrid></Border>
+          <Border Grid.Row="3" Style="{StaticResource SurfaceCard}" Padding="16,12" Margin="0,14,0,0"><StackPanel>
+            <TextBlock FontWeight="SemiBold" Text="结果如何解读" Margin="0,0,0,7"/>
+            <TextBlock Text="· QN 是画质档位代码，不是 kbps 码率。优先显示接口中的详细画质和高帧率标签；“参考”不是实测分辨率。" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource SubText}"/>
+            <TextBlock Text="· 服务器返回 URL ≠ 网络可连接 ≠ PotPlayer 已成功解码。可通过主页面的格式筛选选择兼容格式，并在 PotPlayer 中实际播放。" Margin="0,6,0,0" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource SubText}"/>
+            <Button Content="打开浏览器对比B站画质" HorizontalAlignment="Left" Margin="0,12,0,0" Click="OpenRoom_Click"/></StackPanel></Border>
+        </Grid>
+      </TabItem>
+      <!-- Settings -->
+      <TabItem><TabItem.Header><StackPanel Orientation="Horizontal" VerticalAlignment="Center"><TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" FontSize="15" Width="31" VerticalAlignment="Center" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=TabItem}}"/><TextBlock Text="设置与代理" VerticalAlignment="Center" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=TabItem}}"/></StackPanel></TabItem.Header><ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel Margin="24,20" MaxWidth="890" HorizontalAlignment="Left">
+        <TextBlock Text="偏好设置与本地代理" FontSize="23" FontWeight="SemiBold" Margin="0,0,0,14"/>
+        <GroupBox Header="播放与 PotPlayer"><StackPanel><StackPanel Orientation="Horizontal"><TextBox x:Name="PlayerPathInput" Width="540" ToolTip="PotPlayerMini64.exe 完整路径"/><Button Content="浏览" Click="BrowsePlayer_Click" Margin="10,0,0,0"/><Button Content="自动检测" Click="DetectPlayer_Click"/></StackPanel><StackPanel Orientation="Horizontal" Margin="0,9,0,0"><TextBlock Text="ffprobe（可选，用来探测真实分辨率）：" VerticalAlignment="Center"/><TextBox x:Name="FfprobePathInput" Width="390"/><Button Content="浏览" Click="BrowseFfprobe_Click" Margin="10,0,0,0"/></StackPanel><TextBlock Text="播放器将在每次播放前重新解析原始流。若切换为代理链接，则播放器必须在代理运行期间保持连接。" FontSize="12" Foreground="{DynamicResource SubText}" Margin="0,8,0,0"/></StackPanel></GroupBox>
+        <GroupBox Header="本地固定流代理（仅 127.0.0.1）"><StackPanel><StackPanel Orientation="Horizontal" VerticalAlignment="Center"><TextBlock Text="端口：" VerticalAlignment="Center"/><TextBox x:Name="ProxyPortInput" Width="95" Text="18888"/><Button x:Name="ProxyStartButton" Content="启动代理" Style="{StaticResource PrimaryButton}" Margin="14,0,0,0" Click="ProxyStart_Click"/><Button Content="停止代理" Click="ProxyStop_Click"/><Button Content="复制当前代理地址" Click="ProxyCopy_Click"/></StackPanel><CheckBox x:Name="HlsPreferToggle" Content="优先使用 HLS（利于刷新分段并在新请求中切换线路）；关闭则优先 FLV" IsChecked="True" Margin="0,12,0,0"/><TextBlock x:Name="ProxyStatusText" Text="代理未启动" Foreground="{DynamicResource SubText}" Margin="0,8,0,0"/><TextBlock Text="固定代理地址包含本机访问令牌，请不要把导出的本地播放列表公开。服务器仅接受本机请求，不提供公网服务。" TextWrapping="Wrap" Foreground="{DynamicResource SubText}" Margin="0,6,0,0" FontSize="12"/></StackPanel></GroupBox>
+        <GroupBox Header="监测与体验"><StackPanel><StackPanel Orientation="Horizontal"><TextBlock Text="收藏检查间隔（秒）：" VerticalAlignment="Center"/><TextBox x:Name="PollInput" Width="85" Text="120"/><TextBlock Text="限量连接诊断（KB）：" VerticalAlignment="Center" Margin="19,0,7,0"/><TextBox x:Name="ProbeLimitInput" Width="85" Text="64"/></StackPanel><CheckBox x:Name="NotificationsToggle" Content="主播开播时显示 Windows 系统托盘通知" IsChecked="True"/><CheckBox x:Name="ClipboardToggle" Content="自动识别剪贴板中的 B站直播间链接（只读取当前本地剪贴板；不会自动开始播放）" IsChecked="True"/><CheckBox x:Name="AutoProbeToggle" Content="解析后对首选线路做一次有限数据的连接诊断（可关闭）" IsChecked="True"/><CheckBox x:Name="TrayToggle" Content="关闭窗口时最小化到托盘，以继续检测开播（托盘右键可退出）" IsChecked="True"/><CheckBox x:Name="StartupToggle" Content="开机自启动（当前 Windows 用户）"/><CheckBox x:Name="DarkToggle" Content="深色模式（高对比度配色）" Click="Theme_Click"/><CheckBox x:Name="ReduceMotionToggle" Content="减少动画（关闭页面滑入、按钮缩放和侧栏宽度过渡）" Click="MotionSettings_Click"/></StackPanel></GroupBox>
+        <GroupBox Header="主题与配色 · Theme Studio">
+          <StackPanel>
+            <TextBlock Text="v4.3 经典配色保持为默认方案。其它预设会更换整个工作区、卡片、导航、按钮、表格及弹幕浮窗的颜色；浅色与深色可分别调整。" TextWrapping="Wrap" Foreground="{DynamicResource SubText}" Margin="0,0,0,12"/>
+            <StackPanel Orientation="Horizontal">
+              <Button Content="打开主题配色编辑器" Style="{StaticResource PrimaryButton}" Click="OpenThemeEditor_Click" Margin="0,0,12,0"/>
+              <TextBlock Text="6 套预设 · 74 个颜色角色 · 实时预览 · 导入/导出 · 对比度检查" Foreground="{DynamicResource SubText}" VerticalAlignment="Center" TextWrapping="Wrap"/>
+            </StackPanel>
+            <TextBlock Text="提示：关闭编辑器时选择取消可撤回预览；编辑器中保存后会写入当前用户配置。不会改变 Windows 系统配色。" Foreground="{DynamicResource SubText}" FontSize="12" TextWrapping="Wrap" Margin="0,10,0,0"/>
+          </StackPanel>
+        </GroupBox>
+        <Button Content="保存全部设置" Style="{StaticResource PrimaryButton}" Width="160" HorizontalAlignment="Left" Click="SaveSettings_Click"/>
+      </StackPanel></ScrollViewer></TabItem>
+      <!-- Diagnostics -->
+      <TabItem>
+        <TabItem.Header><StackPanel Orientation="Horizontal" VerticalAlignment="Center"><TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="15" Width="31" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=TabItem}}"/><TextBlock Text="诊断日志" VerticalAlignment="Center" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=TabItem}}"/></StackPanel></TabItem.Header>
+        <Grid Margin="24,20">
+          <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+          <Grid Margin="0,0,0,12">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="运行记录与诊断日志" FontSize="23" FontWeight="SemiBold"/>
+              <TextBlock x:Name="LogFollowStatus" Text="正在跟随最新日志 · 每 2 秒检查更新" FontSize="12" Foreground="{DynamicResource SubText}" Margin="0,5,0,0"/>
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+              <Button Content="刷新日志" Click="LogRefresh_Click"/>
+              <Button Content="打开日志文件夹" Click="LogFolder_Click"/>
+              <Button Content="复制诊断摘要" Click="CopyDiagnostics_Click" Margin="0"/>
+            </StackPanel>
+          </Grid>
+          <Border Grid.Row="1" Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="12" Padding="14,8" Margin="0,0,0,10">
+            <StackPanel Orientation="Horizontal">
+              <CheckBox x:Name="LogAutoFollowToggle" Content="自动跟随最新日志" IsChecked="True" Checked="LogAutoFollow_Changed" Unchecked="LogAutoFollow_Changed" VerticalAlignment="Center" Margin="0,0,16,0"/>
+              <Button Content="回到最新" Click="LogToBottom_Click"/>
+              <TextBlock Text="手动上翻暂停跟随，回到底部自动恢复" Style="{StaticResource SoftCaption}" VerticalAlignment="Center" Margin="8,0,0,0"/>
+            </StackPanel>
+          </Border>
+          <Border Grid.Row="2" Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="12" Padding="10">
+            <TextBox x:Name="LogText" FontFamily="Consolas" FontSize="12" IsReadOnly="True" AcceptsReturn="True" Padding="12,10" BorderThickness="0" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" VerticalContentAlignment="Top" Background="Transparent"/>
+          </Border>
+          <TextBlock Grid.Row="3" Margin="0,10,0,0" Text="日志会对直播源 URL 的查询参数脱敏，不会保存签名源地址；分享诊断时请优先使用「复制诊断摘要」。" TextWrapping="Wrap" Foreground="{DynamicResource SubText}"/>
+        </Grid>
+      </TabItem>
+    </TabControl>
+    <Border Grid.Row="2" Background="{DynamicResource StatusBarBg}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,1,0,0" Padding="21,3">
+      <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+          <Ellipse Width="6" Height="6" Fill="{DynamicResource StatusIndicator}" VerticalAlignment="Center" Margin="0,0,9,0"/>
+          <TextBlock x:Name="StatusText" Text="已就绪 · 直播源链接可能随时间失效，播放前建议重新解析" FontSize="12" Foreground="{DynamicResource StatusBarFg}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+        </StackPanel>
+        <ProgressBar x:Name="BusyBar" Grid.Column="1" Width="112" Height="4" IsIndeterminate="True" Visibility="Collapsed" VerticalAlignment="Center"/>
+      </Grid>
+    </Border>
+  </Grid>
+</Window>
