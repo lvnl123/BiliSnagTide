@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-label="BiliSnagTide project illustration">
+<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#F5F8FD"/><stop offset="100%" stop-color="#E9EFF9"/></linearGradient></defs>
+<rect x="0" y="0" width="1280" height="720" rx="22" fill="url(#sky)" />
+<text x="48" y="58" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="27" font-weight="700" fill="#173256" >应用界面结构示意</text>
+<text x="1242" y="58" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="13" font-weight="600" fill="#6F849F" text-anchor="end" letter-spacing="1">LAYOUT OVERVIEW · SCHEMATIC</text>
+<rect x="43" y="81" width="1195" height="577" rx="15" fill="#FFFFFF" stroke="#CFDDEC" stroke-width="2"/>
+<rect x="44" y="82" width="1193" height="66" rx="15" fill="#FFFFFF" />
+<rect x="44" y="131" width="1193" height="17" rx="0" fill="#FFFFFF" />
+<rect x="66" y="104" width="35" height="35" rx="9" fill="#E1ECFF" />
+<path d="M74 115 C83 107 89 120 94 114 M74 124 C83 116 89 130 94 123" stroke="#2668CF" stroke-width="3.3" stroke-linecap="round" fill="none"/>
+<text x="113" y="126" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="21" font-weight="750" fill="#193353" >BiliSnagTide</text>
+<rect x="290" y="100" width="492" height="37" rx="10" fill="#F3F6FC" stroke="#D8E2EE"/>
+<text x="310" y="124" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="14" font-weight="400" fill="#8091A8" >输入直播间房间号或直播链接</text>
+<rect x="793" y="100" width="95" height="37" rx="9" fill="#EEF3FC" /><text x="841" y="124" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="13" font-weight="600" fill="#2E5385" text-anchor="middle">粘贴</text>
+<rect x="900" y="100" width="122" height="37" rx="9" fill="#2866C3" /><text x="960" y="124" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="13" font-weight="650" fill="#FFFFFF" text-anchor="middle">解析直播源</text>
+<rect x="1035" y="100" width="103" height="37" rx="9" fill="#EEF3FC" /><text x="1086" y="124" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="13" font-weight="600" fill="#2E5385" text-anchor="middle">扫码登录</text>
+<rect x="44" y="148" width="214" height="509" rx="0" fill="#EDF3FB" />
+<rect x="56" y="167" width="191" height="39" rx="9" fill="#DEE8F5" />
+<text x="80" y="193" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="14" font-weight="700" fill="#23456B" >☰   导航菜单</text>
+<text x="70" y="229" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="12" font-weight="750" fill="#6883A8" letter-spacing="1">WORKSPACE</text>
+<rect x="53" y="244" width="195" height="37" rx="8" fill="#D5E5FC" /><text x="69" y="269" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="17" font-weight="600" fill="#2165CC" >◉</text><text x="99" y="268" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="14" font-weight="700" fill="#2159AD" >直播源</text>
+<text x="69" y="310" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="17" font-weight="600" fill="#6883A1" >☆</text><text x="99" y="309" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="14" font-weight="500" fill="#3F5674" >收藏直播间</text>
+<text x="69" y="351" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="17" font-weight="600" fill="#6883A1" >⌕</text><text x="99" y="350" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="14" font-weight="500" fill="#3F5674" >搜索直播</text>
+<text x="69" y="392" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="17" font-weight="600" fill="#6883A1" >▤</text><text x="99" y="391" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="14" font-weight="500" fill="#3F5674" >弹幕伴侣</text>
+<text x="69" y="433" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="17" font-weight="600" fill="#6883A1" >≡</text><text x="99" y="432" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="14" font-weight="500" fill="#3F5674" >批量与 M3U</text>
+<text x="69" y="474" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="17" font-weight="600" fill="#6883A1" >◷</text><text x="99" y="473" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="14" font-weight="500" fill="#3F5674" >播放历史</text>
+<text x="69" y="515" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="17" font-weight="600" fill="#6883A1" >▧</text><text x="99" y="514" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="14" font-weight="500" fill="#3F5674" >画质矩阵</text>
+<text x="69" y="556" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="17" font-weight="600" fill="#6883A1" >⚙</text><text x="99" y="555" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="14" font-weight="500" fill="#3F5674" >设置与代理</text>
+<text x="69" y="597" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="17" font-weight="600" fill="#6883A1" >☷</text><text x="99" y="596" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="14" font-weight="500" fill="#3F5674" >诊断日志</text>
+<rect x="259" y="148" width="978" height="510" rx="0" fill="#F5F8FD" />
+<text x="283" y="186" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="23" font-weight="750" fill="#1E3859" >直播源工作区</text>
+<text x="283" y="208" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="13" font-weight="400" fill="#6C829C" >解析直播源、查看画质和线路，选择播放方式</text>
+<rect x="283" y="222" width="932" height="89" rx="13" fill="#FFFFFF" stroke="#DBE4F1"/>
+<rect x="303" y="240" width="57" height="54" rx="9" fill="#E6EFFE" />
+<text x="377" y="260" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="17" font-weight="700" fill="#233B59" >直播间信息</text>
+<text x="377" y="284" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="13" font-weight="400" fill="#788DA6" >标题、主播、直播状态与封面显示区域</text>
+<rect x="1098" y="244" width="98" height="27" rx="9" fill="#E2EDFF" /><text x="1147" y="262" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="12" font-weight="650" fill="#2C66BF" text-anchor="middle">收藏</text>
+<rect x="283" y="324" width="932" height="263" rx="13" fill="#FFFFFF" stroke="#DBE4F1"/>
+<text x="303" y="353" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="18" font-weight="750" fill="#263F5E" >直播线路</text>
+<rect x="392" y="335" width="53" height="25" rx="12" fill="#E4EEFF" /><text x="419" y="352" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="12" font-weight="650" fill="#2D68C2" text-anchor="middle">0 条</text>
+<rect x="302" y="369" width="894" height="44" rx="8" fill="#EEF3FA" />
+<text x="324" y="397" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="13" font-weight="600" fill="#5A7391" >画质</text>
+<rect x="362" y="378" width="150" height="28" rx="7" fill="#FFFFFF" stroke="#D6E0EB"/><text x="378" y="397" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="13" font-weight="600" fill="#274462" >全部画质  ⌄</text>
+<text x="542" y="397" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="13" font-weight="600" fill="#5A7391" >格式</text>
+<rect x="578" y="378" width="145" height="28" rx="7" fill="#FFFFFF" stroke="#D6E0EB"/><text x="595" y="397" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="13" font-weight="600" fill="#274462" >全部格式  ⌄</text>
+<text x="753" y="397" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="13" font-weight="600" fill="#5A7391" >编码</text>
+<rect x="787" y="378" width="150" height="28" rx="7" fill="#FFFFFF" stroke="#D6E0EB"/><text x="803" y="397" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="13" font-weight="600" fill="#274462" >全部编码  ⌄</text>
+<rect x="304" y="429" width="888" height="35" rx="5" fill="#F6F9FD" />
+<text x="321" y="452" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="13" font-weight="650" fill="#5A7492" >画质 / 清晰度</text>
+<text x="546" y="452" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="13" font-weight="650" fill="#5A7492" >流格式</text>
+<text x="741" y="452" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="13" font-weight="650" fill="#5A7492" >线路 / 编码</text>
+<text x="991" y="452" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="13" font-weight="650" fill="#5A7492" >操作</text>
+<rect x="306" y="473" width="885" height="1" rx="0" fill="#E6ECF5" />
+<text x="321" y="506" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="14" font-weight="400" fill="#8798AC" >等待解析结果…</text>
+<text x="321" y="555" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="13" font-weight="400" fill="#738AA7" >提示：可双击线路播放，或复制播放 URL</text>
+<rect x="283" y="599" width="932" height="46" rx="11" fill="#FFFFFF" stroke="#DBE4F1"/>
+<text x="303" y="627" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="15" font-weight="700" fill="#294261" >线路操作</text>
+<rect x="907" y="608" width="123" height="29" rx="7" fill="#E8EEF8" /><text x="968" y="627" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="13" font-weight="600" fill="#365A87" text-anchor="middle">复制 URL</text>
+<rect x="1037" y="608" width="158" height="29" rx="7" fill="#2969C9" /><text x="1116" y="627" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="13" font-weight="600" fill="#FFFFFF" text-anchor="middle">使用 PotPlayer</text>
+<text x="51" y="697" font-family="Inter,Segoe UI,Microsoft YaHei,PingFang SC,Noto Sans CJK SC,sans-serif" font-size="15" font-weight="500" fill="#667F9D" >此图展示主要模块的布局结构，不代表实时数据或实际运行截图。</text>
+</svg>
