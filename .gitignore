@@ -24,6 +24,10 @@ BiliLiveBuildCache/
 
 # Local app data, caches, credentials
 AppData/
+Data/
+**/account-session.dpapi
+**/account-session.dpapi.tmp
+**/Updates/
 Cache/
 Logs/
 *.tmp
