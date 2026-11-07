@@ -19,8 +19,8 @@ namespace BiliLiveManager;
 /// </summary>
 public static class UpdateService
 {
-    public const string CurrentVersionText = "4.6.1";
-    public static readonly Version CurrentVersion = new(4, 6, 0);
+    public const string CurrentVersionText = "4.6.2";
+    public static readonly Version CurrentVersion = new(4, 6, 2);
     public const string OfficialReleasesUrl = "https://github.com/lvnl123/BiliSnagTide/releases";
     private const string ApiUrl = "https://api.github.com/repos/lvnl123/BiliSnagTide/releases/latest";
     private static readonly HttpClient Client = CreateClient();
@@ -266,14 +266,16 @@ public static class UpdateService
             created = true;
             System.IO.Compression.ZipFile.ExtractToDirectory(verifiedZip, targetDir, overwriteFiles: false);
             string nextExe = Path.Combine(targetDir, "BiliSnagTide.exe");
-            if (!File.Exists(nextExe) || !File.Exists(Path.Combine(targetDir, "portable.flag")))
-                throw new InvalidDataException("ZIP 中缺少程序或便携模式标记。");
+            if (!File.Exists(nextExe))
+                throw new InvalidDataException("ZIP 中缺少主程序 EXE。");
+// v4.6.2 portable EXE is compiled with PORTABLE_BUILD; no flag required.
+// Previous portable ZIPs with portable.flag remain supported by Storage.
 
             // Favorites, history, theme and proxy settings all live in settings.json.
             // Do not copy the downloaded ZIP or the Updates cache into the new build.
             string nextData = Path.Combine(targetDir, "Data");
             Directory.CreateDirectory(nextData);
-            foreach (var name in new[] { "settings.json", "diagnostics.log", "diagnostics.log.old" })
+            foreach (var name in new[] { "settings.json", "diagnostics.log", "diagnostics.log.old", "account-session.dpapi" })
             {
                 ct.ThrowIfCancellationRequested();
                 string source = Path.Combine(Storage.DataDir, name);

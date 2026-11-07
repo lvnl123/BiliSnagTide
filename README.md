@@ -29,6 +29,9 @@
 
 ---
 
+> [!TIP]
+> **v4.6.2 体验更新：** B站扫码登录可通过 Windows DPAPI 加密持久保存；顶部显示头像和昵称，点击进入账号管理。已修复复制 URL 失败后直播线路减少的问题。绿色便携 ZIP 改为单文件自包含程序 + 兼容标记，解压运行后生成本地 `Data/` 目录。
+
 ## ✨ 项目简介
 
 **BiliSnagTide** 将直播间解析、线路管理、外部播放器与弹幕观看放进同一个 Windows 桌面工作区。
@@ -69,21 +72,21 @@
 
 **官方发布入口：** **[GitHub Releases — 查看可下载版本](https://github.com/lvnl123/BiliSnagTide/releases)**
 
-发布构建支持下面两种 Windows x64 交付方式。**请以 Releases 页面上实际显示的附件为准**；自 v4.6.1 起恢复 ZIP 绿色便携版，解压后保留完整运行目录及 `portable.flag`。历史 v4.6.0 单文件 EXE 仍可从旧版 Release 下载。
+发布构建支持下面两种 Windows x64 交付方式。**请以 Releases 页面上实际显示的附件为准**；自 v4.6.2 起恢复 ZIP 绿色便携版，解压后保留完整运行目录及 `portable.flag`。历史 v4.6.0 单文件 EXE 仍可从旧版 Release 下载。
 
 | 版本 | 适合谁 | 运行方式 | 用户数据 |
 |:--|:--|:--|:--|
 | **绿色便携版（Portable）** | 想直接运行、随身携带、不安装程序 | 下载 `*Portable.zip`，完整解压后运行文件夹内的 `BiliSnagTide.exe` | 绿色 ZIP 版：解压目录内的 `Data/` |
 | **标准安装版（Setup）** | 希望有开始菜单入口和卸载流程 | 运行 `*Setup.exe`，按安装向导操作 | `%LOCALAPPDATA%\BiliSnagTide` |
 
-两种构建均使用 **.NET 8 自包含发布**，普通用户**不需要安装 .NET SDK**；支持 Windows x64。v4.6.0 起可在设置页检查 GitHub 正式版本并在软件内下载验证；v4.6.1 起绿色版支持 ZIP 解压更新。PotPlayer、ffprobe 等外部工具如需使用，仍需自行安装。
+两种构建均使用 **.NET 8 自包含发布**，普通用户**不需要安装 .NET SDK**；支持 Windows x64。v4.6.0 起可在设置页检查 GitHub 正式版本并在软件内下载验证；v4.6.2 起绿色版支持 ZIP 解压更新。PotPlayer、ffprobe 等外部工具如需使用，仍需自行安装。
 
 <details>
 <summary><strong>绿色便携版存放在哪里更合适？</strong></summary>
 
 建议单独放在有写入权限的文件夹，例如 `D:\Apps\BiliSnagTide\`。程序会在 EXE 旁创建 `Data/` 保存设置、收藏与日志；不要把它直接放进需要管理员权限写入的系统目录。
 
-v4.6.1 ZIP 便携版需要保留 `portable.flag`。若使用旧版 v4.5.3 的绿色 ZIP，请保留包内原有文件结构和 `portable.flag`。
+v4.6.2 ZIP 便携版需要保留 `portable.flag`。若使用旧版 v4.5.3 的绿色 ZIP，请保留包内原有文件结构和 `portable.flag`。
 </details>
 
 <details>

@@ -16,8 +16,9 @@ public sealed partial class BiliApi
     private CookieContainer _sessionCookies = new();
     public bool HasAuthenticatedSession { get; private set; }
 
-    // User signs in using Bilibili official QR sign-in. Cookies stay in
-    // memory for API calls, never in settings.json, diagnostics, or M3U files.
+    // QR sign-in cookies are kept in memory for API calls; a minimal encrypted
+    // session snapshot may be saved separately by AccountSessionStore (DPAPI).
+    // Cookies never enter settings.json, diagnostics or exported stream URLs.
     public void SetAuthenticatedCookies(IEnumerable<Cookie> source)
     {
         var next = new CookieContainer();
@@ -43,6 +44,23 @@ public sealed partial class BiliApi
     {
         lock (_cookieLock) { _sessionCookies = new CookieContainer(); HasAuthenticatedSession = false; }
     }
+    // Use the official navigation API to verify the session and fetch the
+    // actual account nickname and avatar. Never infer login from a stored UID.
+    public async Task<BiliAccount?> GetLoggedInAccountAsync(CancellationToken ct)
+    {
+        if (!HasAuthenticatedSession) return null;
+        using var doc = await LoadJsonAsync("https://api.bilibili.com/x/web-interface/nav", ct);
+        var root = doc.RootElement;
+        if (GetInt(root, "code") != 0)
+            throw new InvalidOperationException("获取账号资料失败（B站接口返回非零状态）。");
+        var data = Get(root, "data");
+        if (Get(data, "isLogin").ValueKind != JsonValueKind.True) return null;
+        string id = GetString(data, "mid");
+        string name = GetString(data, "uname");
+        if (string.IsNullOrWhiteSpace(id) || string.IsNullOrWhiteSpace(name)) return null;
+        return new BiliAccount(id, name, GetString(data, "face"));
+    }
+
     // Bilibili live getDanmuInfo expects a real buvid3 cookie even for many
     // anonymous sessions. Never use an invented random GUID as buvid3.
     public async Task<bool> EnsureDeviceCookieAsync(CancellationToken ct)
@@ -394,3 +412,5 @@ public sealed class StreamProbe
         catch (Exception e) { return new ProbeResult { Status = "连接错误: " + e.GetType().Name, LatencyMs = watch.Elapsed.TotalMilliseconds }; }
     }
 }
+
+public sealed record BiliAccount(string UserId, string UserName, string FaceUrl);

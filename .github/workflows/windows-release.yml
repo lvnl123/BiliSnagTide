@@ -11,7 +11,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: windows-release-v4.6.1
+  group: windows-release-v4.6.2
   cancel-in-progress: false
 
 jobs:
@@ -36,27 +36,35 @@ jobs:
       - name: Publish portable folder without installer
         shell: pwsh
         run: |
-          dotnet publish "Source/BiliSnagTide.csproj" --configuration Release --runtime win-x64 --self-contained true -p:PortableBuild=false -p:PublishSingleFile=false -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None -p:DebugSymbols=false --no-restore --output "out/portable-publish"
+          dotnet publish "Source/BiliSnagTide.csproj" --configuration Release --runtime win-x64 --self-contained true -p:PortableBuild=true -p:PublishSingleFile=true -p:SatelliteResourceLanguages=zh-Hans -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None -p:DebugSymbols=false --no-restore --output "out/portable-publish"
           if ($LASTEXITCODE -ne 0) { throw "Portable publish failed" }
           $src = "out/portable-publish/BiliSnagTide.exe"
           if (!(Test-Path $src)) { throw "Missing portable EXE" }
-          if (!(Get-ChildItem "out/portable-publish" -Filter "*.dll" | Select-Object -First 1)) { throw "Portable dependencies missing" }
-          # Portable mode is activated by this bundled marker; installation build has none.
-          Set-Content -Path "out/portable-publish/portable.flag" -Value "portable data mode" -NoNewline -Encoding ascii
+          # Single-file publish contains .NET runtime. Keep one executable, plus a
+          # tiny legacy marker for older v4.6.1 in-app updater compatibility.
+          New-Item -ItemType Directory -Force -Path "out/portable-package" | Out-Null
+          Copy-Item $src "out/portable-package/BiliSnagTide.exe"
+          Set-Content "out/portable-package/portable.flag" -Value "portable data mode" -NoNewline -Encoding ascii
           New-Item -ItemType Directory -Force -Path "out/assets" | Out-Null
-          $archive = "out/assets/BiliSnagTide-v4.6.1-Windows-x64-Portable.zip"
-          Compress-Archive -Path "out/portable-publish/*" -DestinationPath $archive -CompressionLevel Optimal
+          $archive = "out/assets/BiliSnagTide-v4.6.2-Windows-x64-Portable.zip"
+          Compress-Archive -Path "out/portable-package/*" -DestinationPath $archive -CompressionLevel Optimal
           if (!(Test-Path $archive)) { throw "Portable ZIP missing" }
           Expand-Archive -Path $archive -DestinationPath "out/portable-check"
           if (!(Test-Path "out/portable-check/BiliSnagTide.exe") -or !(Test-Path "out/portable-check/portable.flag")) {
             throw "Portable ZIP structure check failed"
           }
-          if (!(Get-ChildItem "out/portable-check" -Filter "*.dll" | Select-Object -First 1)) { throw "Portable ZIP dependencies missing" }
+          $files = @(Get-ChildItem "out/portable-check" -File)
+          if ($files.Count -ne 2 -or ($files.Name -notcontains "BiliSnagTide.exe") -or ($files.Name -notcontains "portable.flag")) {
+            throw "Portable ZIP must have only the EXE and backwards-compatible flag"
+          }
+          if ((Get-Item "out/portable-check/BiliSnagTide.exe").Length -lt 10000000) {
+            throw "Portable single-file EXE suspiciously small"
+          }
 
       - name: Clean between build variants
         shell: pwsh
         run: |
-          dotnet clean "Source/BiliSnagTide.csproj" --configuration Release --runtime win-x64 -p:PortableBuild=false
+          dotnet clean "Source/BiliSnagTide.csproj" --configuration Release --runtime win-x64 -p:PortableBuild=true
           if ($LASTEXITCODE -ne 0) { throw "Clean failed" }
 
       - name: Publish installed application without portable flag
@@ -81,7 +89,7 @@ jobs:
         run: |
           & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "packaging\BiliSnagTide.iss"
           if ($LASTEXITCODE -ne 0) { throw "Installer compilation failed" }
-          $installer = "out/installer/BiliSnagTide-v4.6.1-Windows-x64-Setup.exe"
+          $installer = "out/installer/BiliSnagTide-v4.6.2-Windows-x64-Setup.exe"
           if (!(Test-Path $installer)) { throw "Installer EXE missing" }
           Copy-Item $installer "out/assets/"
 
@@ -89,8 +97,8 @@ jobs:
         shell: pwsh
         run: |
           $items = @(
-            "out/assets/BiliSnagTide-v4.6.1-Windows-x64-Portable.zip",
-            "out/assets/BiliSnagTide-v4.6.1-Windows-x64-Setup.exe"
+            "out/assets/BiliSnagTide-v4.6.2-Windows-x64-Portable.zip",
+            "out/assets/BiliSnagTide-v4.6.2-Windows-x64-Setup.exe"
           )
           foreach ($f in $items) {
             if (!(Test-Path $f)) { throw "Missing asset: $f" }
@@ -102,8 +110,8 @@ jobs:
         shell: pwsh
         run: |
           $files = @(
-            "out/assets/BiliSnagTide-v4.6.1-Windows-x64-Portable.zip",
-            "out/assets/BiliSnagTide-v4.6.1-Windows-x64-Setup.exe"
+            "out/assets/BiliSnagTide-v4.6.2-Windows-x64-Portable.zip",
+            "out/assets/BiliSnagTide-v4.6.2-Windows-x64-Setup.exe"
           )
           $lines = foreach ($file in $files) {
             $hash = (Get-FileHash $file -Algorithm SHA256).Hash.ToLowerInvariant()
@@ -118,16 +126,16 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $tag = "v4.6.1"
+          $tag = "v4.6.2"
           $assets = @(
-            "out/assets/BiliSnagTide-v4.6.1-Windows-x64-Portable.zip",
-            "out/assets/BiliSnagTide-v4.6.1-Windows-x64-Setup.exe",
+            "out/assets/BiliSnagTide-v4.6.2-Windows-x64-Portable.zip",
+            "out/assets/BiliSnagTide-v4.6.2-Windows-x64-Setup.exe",
             "out/assets/SHA256SUMS.txt"
           )
           gh release view $tag --repo $env:GITHUB_REPOSITORY *> $null
           if ($LASTEXITCODE -eq 0) {
             gh release upload $tag $assets --clobber --repo $env:GITHUB_REPOSITORY
           } else {
-            gh release create $tag $assets --title "BiliSnagTide v4.6.1" --notes-file "packaging/RELEASE_NOTES.md" --target $env:GITHUB_SHA --repo $env:GITHUB_REPOSITORY --latest
+            gh release create $tag $assets --title "BiliSnagTide v4.6.2" --notes-file "packaging/RELEASE_NOTES.md" --target $env:GITHUB_SHA --repo $env:GITHUB_REPOSITORY --latest
           }
           if ($LASTEXITCODE -ne 0) { throw "Release publish failed" }

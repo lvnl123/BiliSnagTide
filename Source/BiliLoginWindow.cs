@@ -25,8 +25,9 @@ namespace BiliLiveManager;
 
 /// <summary>
 /// Bilibili web QR sign-in. No embedded browser and no password collection.
-/// QR/session key, SESSDATA and refresh token are never written to disk/logs.
-/// The login remains in RAM until the application exits.
+/// QR keys and refresh tokens are never written to settings or logs.
+/// After successful QR sign-in, the main window may save a minimal
+/// DPAPI-encrypted account session for the current Windows user.
 /// </summary>
 public sealed class BiliLoginWindow : Window
 {
@@ -81,7 +82,7 @@ public sealed class BiliLoginWindow : Window
         buttons.Children.Add(_refresh); buttons.Children.Add(logout); buttons.Children.Add(close);
         root.Children.Add(buttons);
         root.Children.Add(new TextBlock {
-            Text = "仅连接 B站官网接口；不会获取账号密码。登录凭据只保存在当前程序内存中，不写入日志、M3U 或设置文件。",
+            Text = "仅连接 B站官网接口；不会获取账号密码。登录凭据可使用 Windows 当前用户加密保存在本机；不会写入普通设置、诊断日志或 M3U。",
             Foreground = Role("SubText"), FontSize = 12, TextWrapping = TextWrapping.Wrap,
             TextAlignment = TextAlignment.Center, Margin = new Thickness(0, 22, 0, 0)
         });

@@ -57,7 +57,7 @@ public static class QualityMatrixTools
         };
     }
 
-    public static readonly int[] RequestedQns = { 80, 150, 250, 400, 10000, 20000, 30000 };
+    public static readonly int[] RequestedQns = { 80, 150, 250, 400, 10000, 15000, 20000, 30000 };
     public static string Status(int requested, IReadOnlyCollection<int> actual, bool errored)
         => errored ? "请求失败" : actual.Contains(requested) ? "已获取" : actual.Count > 0 ? "返回其他画质" : "没有返回流";
 

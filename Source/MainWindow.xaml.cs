@@ -101,7 +101,7 @@ public partial class MainWindow : Window
             if (!safeMode && Environment.GetCommandLineArgs().Contains("--minimized") && _tray?.Visible == true) { Hide(); }
             if (!safeMode && _favorites.Count > 0) _ = MonitorFavoritesAsync(false);
         };
-        AppLog.Write("BiliSnagTide v4.6.1 启动");
+        AppLog.Write("BiliSnagTide v4.6.2 启动");
     }
     private async void BiliLogin_Click(object sender, RoutedEventArgs e)
     {
