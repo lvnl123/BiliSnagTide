@@ -95,7 +95,14 @@
         <Border Grid.Column="5" BorderBrush="{DynamicResource TopBarBorder}" BorderThickness="1,0,0,0" Padding="12,0,0,0">
           <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
             <TextBlock x:Name="ConnectionText" Text="就绪" Foreground="{DynamicResource HeaderMuted}" FontSize="12" VerticalAlignment="Center" Margin="0,0,10,0"/>
-            <Button Content="扫码登录" Click="BiliLogin_Click" Style="{StaticResource QuietButton}" Height="38" MinHeight="38"/>
+            <Button x:Name="AccountHeaderButton" Click="AccountHeader_Click" Style="{StaticResource QuietButton}" Height="38" MinHeight="38" ToolTip="扫码登录 / 账号管理">
+              <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Border x:Name="HeaderAvatarBorder" Width="27" Height="27" CornerRadius="14" ClipToBounds="True" Visibility="Collapsed" Margin="0,0,8,0" Background="{DynamicResource AccentSoft}">
+                  <Image x:Name="AccountHeaderAvatar" Width="27" Height="27" Stretch="UniformToFill"/>
+                </Border>
+                <TextBlock x:Name="AccountHeaderName" Text="扫码登录" VerticalAlignment="Center" MaxWidth="110" TextTrimming="CharacterEllipsis"/>
+              </StackPanel>
+            </Button>
             <Button Content="浏览器打开" Click="OpenRoom_Click" Style="{StaticResource QuietButton}" Height="38" MinHeight="38" Margin="0"/>
           </StackPanel>
         </Border>
@@ -208,6 +215,7 @@
                   <ComboBox x:Name="CodecChoice" Width="135" Margin="0,3,0,3" SelectionChanged="Filter_Changed">
                     <ComboBoxItem Content="全部编码" Tag="all" IsSelected="True"/><ComboBoxItem Content="H.264" Tag="avc"/><ComboBoxItem Content="H.265" Tag="hevc"/>
                   </ComboBox>
+                  <Button Content="清除筛选 · 全部线路" Click="FiltersReset_Click" Margin="12,3,0,3" ToolTip="显示所有已解析的候选线路"/>
                 </WrapPanel>
               </Border>
               <Grid Grid.Row="2" ClipToBounds="True">
@@ -403,6 +411,26 @@
       <!-- Settings -->
       <TabItem><TabItem.Header><StackPanel Orientation="Horizontal" VerticalAlignment="Center"><TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" FontSize="15" Width="31" VerticalAlignment="Center" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=TabItem}}"/><TextBlock Text="设置与代理" VerticalAlignment="Center" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=TabItem}}"/></StackPanel></TabItem.Header><ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel Margin="24,20" MaxWidth="890" HorizontalAlignment="Left">
         <TextBlock Text="偏好设置与本地代理" FontSize="23" FontWeight="SemiBold" Margin="0,0,0,14"/>
+        <GroupBox Header="B站账号 · 登录与管理">
+          <StackPanel>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,12">
+              <Border x:Name="SettingsAvatarBorder" Width="56" Height="56" CornerRadius="28" ClipToBounds="True" Visibility="Collapsed" Margin="0,0,15,0" Background="{DynamicResource AccentSoft}">
+                <Image x:Name="SettingsAccountAvatar" Width="56" Height="56" Stretch="UniformToFill"/>
+              </Border>
+              <StackPanel VerticalAlignment="Center">
+                <TextBlock x:Name="SettingsAccountName" Text="尚未登录" FontWeight="SemiBold" FontSize="18" TextTrimming="CharacterEllipsis"/>
+                <TextBlock x:Name="SettingsAccountUid" Text="" FontSize="12" Foreground="{DynamicResource SubText}" Margin="0,4,0,0"/>
+                <TextBlock x:Name="SettingsAccountStatus" Text="扫码登录后可安全保存当前 Windows 用户的会话。" FontSize="12" Foreground="{DynamicResource SubText}" TextWrapping="Wrap" Margin="0,5,0,0"/>
+              </StackPanel>
+            </StackPanel>
+            <WrapPanel>
+              <Button x:Name="AccountSwitchButton" Content="扫码登录" Click="AccountSwitch_Click" Style="{StaticResource PrimaryButton}" Margin="0,0,10,6"/>
+              <Button x:Name="AccountLogoutButton" Content="退出登录" Click="AccountLogout_Click" IsEnabled="False" Margin="0,0,10,6"/>
+            </WrapPanel>
+            <TextBlock Text="登录凭据使用 Windows 当前用户加密保存在本机，不会写进 settings.json 或日志。绿色版复制到另一台电脑或 Windows 账号时需要重新扫码；B站会话失效也需重新登录。"
+                       FontSize="12" Foreground="{DynamicResource SubText}" TextWrapping="Wrap" Margin="0,7,0,0"/>
+          </StackPanel>
+        </GroupBox>
         <GroupBox Header="播放与 PotPlayer"><StackPanel><StackPanel Orientation="Horizontal"><TextBox x:Name="PlayerPathInput" Width="540" ToolTip="PotPlayerMini64.exe 完整路径"/><Button Content="浏览" Click="BrowsePlayer_Click" Margin="10,0,0,0"/><Button Content="自动检测" Click="DetectPlayer_Click"/></StackPanel><StackPanel Orientation="Horizontal" Margin="0,9,0,0"><TextBlock Text="ffprobe（可选，用来探测真实分辨率）：" VerticalAlignment="Center"/><TextBox x:Name="FfprobePathInput" Width="390"/><Button Content="浏览" Click="BrowseFfprobe_Click" Margin="10,0,0,0"/></StackPanel><TextBlock Text="播放器将在每次播放前重新解析原始流。若切换为代理链接，则播放器必须在代理运行期间保持连接。" FontSize="12" Foreground="{DynamicResource SubText}" Margin="0,8,0,0"/></StackPanel></GroupBox>
         <GroupBox Header="本地固定流代理（仅 127.0.0.1）"><StackPanel><StackPanel Orientation="Horizontal" VerticalAlignment="Center"><TextBlock Text="端口：" VerticalAlignment="Center"/><TextBox x:Name="ProxyPortInput" Width="95" Text="18888"/><Button x:Name="ProxyStartButton" Content="启动代理" Style="{StaticResource PrimaryButton}" Margin="14,0,0,0" Click="ProxyStart_Click"/><Button Content="停止代理" Click="ProxyStop_Click"/><Button Content="复制当前代理地址" Click="ProxyCopy_Click"/></StackPanel><CheckBox x:Name="HlsPreferToggle" Content="优先使用 HLS（利于刷新分段并在新请求中切换线路）；关闭则优先 FLV" IsChecked="True" Margin="0,12,0,0"/><TextBlock x:Name="ProxyStatusText" Text="代理未启动" Foreground="{DynamicResource SubText}" Margin="0,8,0,0"/><TextBlock Text="固定代理地址包含本机访问令牌，请不要把导出的本地播放列表公开。服务器仅接受本机请求，不提供公网服务。" TextWrapping="Wrap" Foreground="{DynamicResource SubText}" Margin="0,6,0,0" FontSize="12"/></StackPanel></GroupBox>
         <GroupBox Header="监测与体验"><StackPanel><StackPanel Orientation="Horizontal"><TextBlock Text="收藏检查间隔（秒）：" VerticalAlignment="Center"/><TextBox x:Name="PollInput" Width="85" Text="120"/><TextBlock Text="限量连接诊断（KB）：" VerticalAlignment="Center" Margin="19,0,7,0"/><TextBox x:Name="ProbeLimitInput" Width="85" Text="64"/></StackPanel><CheckBox x:Name="NotificationsToggle" Content="主播开播时显示 Windows 系统托盘通知" IsChecked="True"/><CheckBox x:Name="ClipboardToggle" Content="自动识别剪贴板中的 B站直播间链接（只读取当前本地剪贴板；不会自动开始播放）" IsChecked="True"/><CheckBox x:Name="AutoProbeToggle" Content="解析后对首选线路做一次有限数据的连接诊断（可关闭）" IsChecked="True"/><CheckBox x:Name="TrayToggle" Content="关闭窗口时最小化到托盘，以继续检测开播（托盘右键可退出）" IsChecked="True"/><CheckBox x:Name="StartupToggle" Content="开机自启动（当前 Windows 用户）"/><CheckBox x:Name="DarkToggle" Content="深色模式（高对比度配色）" Click="Theme_Click"/><CheckBox x:Name="ReduceMotionToggle" Content="减少动画（关闭页面滑入、按钮缩放和侧栏宽度过渡）" Click="MotionSettings_Click"/></StackPanel></GroupBox>

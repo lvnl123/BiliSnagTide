@@ -54,6 +54,7 @@ public partial class MainWindow : Window
         InitializeComponent();
         Loaded += (_, _) => SetupFluentMotion();
         Loaded += async (_, _) => await CheckUpdatesOnLaunchAsync();
+        Loaded += async (_, _) => await RestoreAccountSessionAsync();
         _settings = Storage.Load();
         bool safeMode = Environment.GetCommandLineArgs().Contains("--safe-mode", StringComparer.OrdinalIgnoreCase);
         if (safeMode)
@@ -105,30 +106,17 @@ public partial class MainWindow : Window
     }
     private async void BiliLogin_Click(object sender, RoutedEventArgs e)
     {
-        if (_isBusy) { SetStatus("请先结束当前画质扫描，再同步登录状态。"); return; }
+        if (_isBusy) { SetStatus("请先结束当前画质扫描，再管理登录状态。"); return; }
         try
         {
             var dialog = new BiliLoginWindow(_current?.RoomId ?? "") { Owner = this };
             bool accepted = dialog.ShowDialog() == true;
             if (dialog.ClearLoginRequested)
             {
-                _api.ClearAuthenticatedCookies();
-                SetStatus("已清除本软件的B站登录状态。其他浏览器不受影响。");
+                ClearAccountSession();
                 return;
             }
-            if (!accepted) return;
-            _api.SetAuthenticatedCookies(dialog.Cookies);
-            if (!_api.HasAuthenticatedSession)
-            {
-                SetStatus("扫码登录未成功，仍采用匿名请求。请刷新二维码并在B站 App 确认。");
-                return;
-            }
-            SetStatus("B站登录状态已在本软件内同步。现在重新获取该直播间画质。");
-            if (_current != null)
-                await RunOperationAsync("使用已登录状态重新扫描画质…", async ct => {
-                    ApplyQualityScan(await _api.ScanAllQualitiesAsync(_current.RoomId, ct));
-                    SetStatus("已登录扫描完成。请查看画质与源诊断；是否能拿到2K仍由B站接口决定。");
-                });
+            if (accepted) await FinishAccountLoginAsync(dialog.Cookies);
         }
         catch (Exception ex)
         {
@@ -330,8 +318,19 @@ public partial class MainWindow : Window
         var selected = _streams.FirstOrDefault(x => x.StableKey == previous?.StableKey) ?? _streams.FirstOrDefault();
         StreamGrid.SelectedItem = selected;
         UrlPreview.Text = selected?.Url ?? "没有匹配的直播线路。";
-        ConnectionText.Text = _streams.Count + " 条线路";
+        ConnectionText.Text = $"显示 {_streams.Count} / {_all.Count} 条线路";
     }
+    private void FiltersReset_Click(object sender, RoutedEventArgs e)
+    {
+        SelectTag(QualityChoice, "all");
+        SelectTag(FormatChoice, "all");
+        SelectTag(CodecChoice, "all");
+        _settings.Format = "all";
+        _settings.Codec = "all";
+        ApplyFilters();
+        SetStatus("已清除线路筛选，显示所有实际返回的候选线路。");
+    }
+
     private void Filter_Changed(object sender, SelectionChangedEventArgs e)
     {
         if (!IsLoaded || _settings == null) return;
@@ -346,8 +345,11 @@ public partial class MainWindow : Window
     }
     private void UpdateRefreshedQuality(StreamEntry selected, List<StreamEntry> fresh)
     {
-        _all.RemoveAll(x => x.Quality == selected.Quality);
-        _all.AddRange(fresh);
+        // A single-qn refresh may return fewer CDN hosts than the complete scan.
+        // Merge rather than removing the other cached choices of this quality.
+        var combined = QualityMatrixTools.DistinctStreams(_all.Concat(fresh));
+        _all.Clear();
+        _all.AddRange(combined);
         ApplyFilters();
     }
     private StreamEntry? SelectedStream() => StreamGrid.SelectedItem as StreamEntry;
@@ -491,23 +493,33 @@ public partial class MainWindow : Window
         if (original == null || _current == null) { SetStatus("请先选择一条直播线路。"); return; }
         await RunOperationAsync("正在刷新原始地址并复制…", async ct => {
             StreamEntry entry = original;
-            bool refreshed = false;
-            try {
-                var fresh = (await _api.GetStreamsAsync(_current.RoomId, original.Quality, ct)).Where(x => x.Quality == original.Quality).ToList();
+            List<StreamEntry>? freshEntries = null;
+            try
+            {
+                var fresh = (await _api.GetStreamsAsync(_current.RoomId, original.Quality, ct))
+                    .Where(x => x.Quality == original.Quality).ToList();
                 entry = fresh.FirstOrDefault(x => x.StableKey == original.StableKey)
                     ?? fresh.FirstOrDefault(x => x.Format == original.Format && x.Codec == original.Codec)
                     ?? fresh.FirstOrDefault() ?? throw new InvalidOperationException("没有返回可用线路");
-                UpdateRefreshedQuality(entry, fresh);
-                StreamGrid.SelectedItem = _streams.FirstOrDefault(x => x.StableKey == entry.StableKey) ?? _streams.FirstOrDefault();
-                refreshed = true;
+                freshEntries = fresh;
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
-            catch (Exception ex) { AppLog.Write("复制前刷新失败，保留已有URL", ex); }
+            catch (Exception ex) { AppLog.Write("复制前刷新失败，保留已有URL及所有线路", ex); }
+
             bool ok = await WriteClipboardAsync(entry.Url);
-            SetStatus(ok ? refreshed ? "新鲜直播 URL 已复制，可在 PotPlayer 中 Ctrl + U 播放。" : "已复制缓存 URL，但重新提取失败，地址可能过期。"
-                : "剪贴板暂时不可用，可保存 URL 为 TXT；尝试关闭占用剪贴板的程序。 ");
+            if (ok && freshEntries != null)
+            {
+                UpdateRefreshedQuality(entry, freshEntries);
+                StreamGrid.SelectedItem = _streams.FirstOrDefault(x => x.StableKey == entry.StableKey)
+                    ?? _streams.FirstOrDefault();
+            }
+            SetStatus(ok ? freshEntries != null
+                    ? "已复制刷新后的直播 URL；其他线路保持不变。"
+                    : "已复制缓存 URL；刷新失败，地址可能过期。"
+                : "剪贴板暂时不可用，直播线路没有被删除。可使用「保存 TXT」或重试。");
         });
     }
+
     private void SaveTxt_Click(object sender, RoutedEventArgs e)
     {
         var selected = SelectedStream(); if (selected == null) return;
