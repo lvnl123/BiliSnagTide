@@ -82,9 +82,17 @@ internal static class AccountSessionStore
         }
     }
 
-    public static void Delete()
+    public static bool Delete()
     {
-        try { if (File.Exists(SessionPath)) File.Delete(SessionPath); }
-        catch (Exception ex) { AppLog.Write("删除本机登录会话文件失败", new Exception(ex.GetType().Name)); }
+        try
+        {
+            if (File.Exists(SessionPath)) File.Delete(SessionPath);
+            return !File.Exists(SessionPath);
+        }
+        catch (Exception ex)
+        {
+            AppLog.Write("删除本机登录会话文件失败", new Exception(ex.GetType().Name));
+            return false;
+        }
     }
 }

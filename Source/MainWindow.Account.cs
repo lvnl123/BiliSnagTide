@@ -100,10 +100,12 @@ public partial class MainWindow
     private void ClearAccountSession()
     {
         _api.ClearAuthenticatedCookies();
-        AccountSessionStore.Delete();
+        bool cleared = AccountSessionStore.Delete();
         _loggedInAccount = null;
-        RefreshAccountUi("已退出登录，本机保存的会话已清除");
-        SetStatus("已退出本软件 B站账号。浏览器登录状态未更改。");
+        RefreshAccountUi(cleared ? "已退出登录，本机加密会话已清除" :
+            "已退出当前会话，但会话文件删除失败；请检查 Data 目录权限");
+        SetStatus(cleared ? "已退出本软件 B站账号。浏览器状态未更改。" :
+            "退出登录时无法删除本机会话文件，请检查文件夹权限后重试。");
     }
 
     private async Task FinishAccountLoginAsync(System.Collections.Generic.IEnumerable<Cookie> cookies)
