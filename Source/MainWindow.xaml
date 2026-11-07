@@ -135,7 +135,7 @@
                 </StackPanel>
                 <StackPanel x:Name="SidebarFooter" DockPanel.Dock="Bottom" Margin="20,14,16,17">
                   <Border Height="1" Background="{DynamicResource NavBorder}" Margin="0,0,0,14"/>
-                  <TextBlock Text="BILISNAGTIDE  /  v4.5.2" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource NavText}"/>
+                  <TextBlock Text="BILISNAGTIDE  /  v4.6.2" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource NavText}"/>
                   <TextBlock Text="Windows · .NET 8" FontSize="12" Foreground="{DynamicResource NavMuted}" Margin="0,5,0,0"/>
                 </StackPanel>
                 <TabPanel IsItemsHost="True" Margin="0,0,0,0" KeyboardNavigation.TabIndex="1"/>
