@@ -12,7 +12,7 @@
 
 ## 下载
 
-- `BiliSnagTide-v4.6.2-Windows-x64-Portable.zip` — 绿色便携 ZIP，完整解压后运行 `BiliSnagTide.exe`。
+- `BiliSnagTide-v4.6.2-Windows-x64-Portable.zip` — 绿色便携 ZIP，完整解压后运行 `BiliSnagTide.exe`；请保留 ZIP 内的 `portable.flag`。
 - `BiliSnagTide-v4.6.2-Windows-x64-Setup.exe` — 安装版，可正常卸载。
 - `SHA256SUMS.txt` — 下载包 SHA-256 校验清单。
 
